@@ -326,6 +326,17 @@ function waitForElement(selector, timeout = 3000) {
  * already in the URL. Chromium tries to perform that jump while it is still
  * parsing the document, which is unreliable because the event list is rendered
  * after its API call resolves, so the position is applied here instead.
+ *
+ * Note on what this deliberately does NOT do: an earlier revision also added
+ * tabindex="-1" to the target and called focus() on it. That had two unwanted
+ * effects and no benefit:
+ *   * making a section focusable turns its paragraphs into text inputs as far
+ *     as the browser is concerned, so clicking the section showed an insertion
+ *     caret - the "vertical line" that was reported;
+ *   * focusing the section also drew the :focus-visible ring around the whole
+ *     section, which reads as an unexplained amber outline.
+ * The scroll itself is what the visitor asked for, and :target already lets a
+ * stylesheet mark the section, so no focus handling is needed.
  */
 async function scrollToHashTarget() {
   const hash = window.location.hash;
@@ -334,23 +345,14 @@ async function scrollToHashTarget() {
   const target = await waitForElement(hash);
   if (!target) return;
 
-  // Instant positioning is used rather than `behavior: 'smooth'`. A smooth
-  // animation is cancelled when the document height changes underneath it, and
-  // the home page grows every time an event image loads - which left the
-  // visitor part way down the page with the requested section still off
-  // screen. Reliability matters more than the animation for a jump link.
+  // Instant positioning rather than `behavior: 'smooth'`: a smooth animation is
+  // cancelled when the document height changes underneath it, and the home page
+  // grows every time an event image loads, which left the visitor part way down
+  // the page. Reliability matters more than the animation for a jump link.
   if (typeof target.scrollIntoView === 'function') {
     target.scrollIntoView({ behavior: 'auto', block: 'start' });
   } else if ('scrollY' in window) {
     window.scrollTo(0, target.getBoundingClientRect().top + window.scrollY);
-  }
-
-  // A fragment link should also move the reading position, not only the view.
-  if (!target.hasAttribute('tabindex')) {
-    target.setAttribute('tabindex', '-1');
-  }
-  if (typeof target.focus === 'function') {
-    target.focus({ preventScroll: true });
   }
 }
 

@@ -857,6 +857,52 @@ async function testClient() {
     assert.ok(section, 'the contact section is missing from the home page');
   });
 
+  await test('jumping to a section does not make page content focusable', async () => {
+    /*
+     * Reported defect: clicking the text of a section showed a vertical
+     * insertion caret.
+     *
+     * Cause: the section jump added tabindex="-1" to the target and called
+     * focus() on it. A focusable element is treated as a text input by the
+     * browser, so clicking its paragraphs put a caret there; the same focus also
+     * drew the :focus-visible ring around the whole section.
+     *
+     * Scrolling is all the visitor asked for, so no section may end up
+     * focusable - and in particular no content element may carry tabindex="-1"
+     * after a jump.
+     */
+    const { window } = await loadPage({ JSDOM }, 'index.html', {
+      url: 'http://localhost:5500/index.html#contact',
+      apiHandler,
+      beforeInit: (win) => {
+        // jsdom does not implement scrolling; the jump is what matters here.
+        win.Element.prototype.scrollIntoView = function scrollIntoViewNoop() {};
+      },
+    });
+
+    // Give the hash handler time to run.
+    await waitFor(() => window.document.getElementById('contact'));
+    await new Promise((resolve) => setTimeout(resolve, 250));
+
+    const focusable = [...window.document.querySelectorAll('[tabindex]')];
+    assert.deepEqual(
+      focusable.map((el) => `${el.tagName.toLowerCase()}#${el.id}[tabindex="${el.getAttribute('tabindex')}"]`),
+      [],
+      'no element should be given a tabindex by the section jump'
+    );
+
+    // Section containers must not be focusable either, however they are reached.
+    for (const id of ['about', 'contact', 'upcoming-events']) {
+      const element = window.document.getElementById(id);
+      if (!element) continue;
+      assert.equal(
+        element.getAttribute('tabindex'),
+        null,
+        `#${id} must not be focusable, or clicking its text shows an insertion caret`
+      );
+    }
+  });
+
   await test('home page statistics are filled from /api/stats', async () => {
     const { window } = await loadPage({ JSDOM }, 'index.html', {
       url: 'http://localhost:5500/index.html',
