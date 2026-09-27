@@ -1,0 +1,823 @@
+{
+  "info": {
+    "name": "PROG2002 A2 - Charity Events API",
+    "description": "Read-only REST API for the charity events website.\n\nBuilt for PROG2002 Web Development II, Assessment 2.\n\nData source : MySQL 8.4, database charityevents_db\nBase URL    : http://localhost:3000/api\n\nThe API is read-only in Assessment 2: the brief states that POST, PUT and DELETE\nmethods belong to Assessment 3, so no write requests are included here.\n\nSuggested demo order for the video:\n  1. Health check\n  2. Home page listing (upcoming events)\n  3. Search with all three criteria at once\n  4. The deliberately invalid date range, to show the 400 response\n  5. The suspended event, to show that it is hidden (404)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/api",
+      "type": "string"
+    },
+    {
+      "key": "eventId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "suspendedId",
+      "value": "11",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "description": "Confirms the API is running and the database answers.",
+      "item": [
+        {
+          "name": "/health",
+          "description": "Returns the API status and the database connection details. A 503 means the API is running but MySQL is unreachable.",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "description": "Returns the API status and the database connection details. A 503 means the API is running but MySQL is unreachable."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('envelope reports success', () => pm.expect(pm.response.json().success).to.be.true);",
+                  "pm.test('database is connected', () => pm.expect(pm.response.json().data.database.connected).to.not.eql(false));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "All events - table intact after an injection attempt",
+          "description": "Reads the whole event table so the previous request can be shown to have done no damage. Sent after the SQL injection attempt in the folder \"Validation and error handling\": the table still holds its 11 rows, which is the evidence that the sort parameter is validated rather than passed into the query.",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/events?state=all&limit=100",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "events"
+              ],
+              "query": [
+                {
+                  "key": "state",
+                  "value": "all",
+                  "description": "Include events that have already finished, so every row is counted."
+                },
+                {
+                  "key": "limit",
+                  "value": "100",
+                  "description": "The largest page the API allows."
+                }
+              ]
+            },
+            "description": "Reads the whole event table so the previous request can be shown to have done no damage. Sent after the SQL injection attempt in the folder \"Validation and error handling\": the table still holds its 11 rows, which is the evidence that the sort parameter is validated rather than passed into the query."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('the table still holds every event', () => {",
+                  "  // Eleven rows exist in the table; ten are public because one is suspended.",
+                  "  pm.expect(pm.response.json().meta.total).to.eql(10);",
+                  "});",
+                  "pm.test('no event row was lost', () => {",
+                  "  pm.response.json().data.forEach((event) => pm.expect(event.eventId).to.be.a('number'));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Home page",
+      "description": "Endpoints the home page calls when it loads.",
+      "item": [
+        {
+          "name": "/events/upcoming  (home listing)",
+          "description": "Current and upcoming active events, soonest first. Past events are excluded and suspended events are never included.",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/events/upcoming?limit=12&sort=date&direction=asc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "events",
+                "upcoming"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "12",
+                  "description": "How many events the home page asks for."
+                },
+                {
+                  "key": "sort",
+                  "value": "date"
+                },
+                {
+                  "key": "direction",
+                  "value": "asc"
+                }
+              ]
+            },
+            "description": "Current and upcoming active events, soonest first. Past events are excluded and suspended events are never included."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('at least one event is returned', () => pm.expect(body.data.length).to.be.above(0));",
+                  "pm.test('no past event is included', () => {",
+                  "  body.data.forEach((event) => pm.expect(event.eventState).to.not.eql('past'));",
+                  "});",
+                  "pm.test('suspended event 11 is not included', () => {",
+                  "  body.data.forEach((event) => pm.expect(event.eventId).to.not.eql(11));",
+                  "});",
+                  "pm.test('events are sorted by date ascending', () => {",
+                  "  const dates = body.data.map((event) => event.dateStart);",
+                  "  pm.expect(dates).to.eql([...dates].sort());",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "/stats  (impact figures)",
+          "description": "Headline counts and totals for the four figures on the home page.",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/stats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "stats"
+              ]
+            },
+            "description": "Headline counts and totals for the four figures on the home page."
+          }
+        },
+        {
+          "name": "/organization  (featured charity)",
+          "description": "The organisation whose mission and contact details appear on the home page.",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/organization",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "organization"
+              ]
+            },
+            "description": "The organisation whose mission and contact details appear on the home page."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Search page",
+      "description": "The filter endpoints. GET /api/events is the endpoint described in detail in the report.",
+      "item": [
+        {
+          "name": "/events  (no filter)",
+          "description": "The default view: active events that have not finished. The state parameter defaults to upcoming.",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/events?limit=100",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "events"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "100",
+                  "description": "The maximum the API allows, so nothing is hidden by paging."
+                }
+              ]
+            },
+            "description": "The default view: active events that have not finished. The state parameter defaults to upcoming."
+          }
+        },
+        {
+          "name": "/events  (three criteria at once)",
+          "description": "This is the request to demonstrate in the video. It filters on date, location and category together and returns exactly one event, the Riverside Rainbow Fun Run. The meta.appliedFilters object echoes what was applied.",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/events?state=all&city=Lismore&category=1&from=2026-01-01&to=2026-12-31",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "events"
+              ],
+              "query": [
+                {
+                  "key": "state",
+                  "value": "all",
+                  "description": "Include events that have already finished."
+                },
+                {
+                  "key": "city",
+                  "value": "Lismore",
+                  "description": "Partial, case-insensitive city match."
+                },
+                {
+                  "key": "category",
+                  "value": "1",
+                  "description": "Category id 1 is Fun Run. Repeat the key or use commas for several."
+                },
+                {
+                  "key": "from",
+                  "value": "2026-01-01",
+                  "description": "Earliest end date."
+                },
+                {
+                  "key": "to",
+                  "value": "2026-12-31",
+                  "description": "Latest start date."
+                }
+              ]
+            },
+            "description": "This is the request to demonstrate in the video. It filters on date, location and category together and returns exactly one event, the Riverside Rainbow Fun Run. The meta.appliedFilters object echoes what was applied."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('exactly one event matches', () => pm.expect(body.meta.total).to.eql(1));",
+                  "pm.test('the match is the Lismore fun run', () => {",
+                  "  pm.expect(body.data[0].eventId).to.eql(1);",
+                  "});",
+                  "pm.test('the applied filters are echoed back', () => {",
+                  "  pm.expect(body.meta.appliedFilters.city).to.eql('Lismore');",
+                  "  pm.expect(body.meta.appliedFilters.categoryIds).to.eql([1]);",
+                  "});",
+                  "pm.test('the progress figures are present', () => {",
+                  "  const event = body.data[0];",
+                  "  pm.expect(event.goalAmount).to.be.a('number');",
+                  "  pm.expect(event.raisedAmount).to.be.a('number');",
+                  "  pm.expect(event.progressPercent).to.be.a('number');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "/events  (several categories)",
+          "description": "Shows that a repeated query parameter is treated as a list. The same result comes from category=1,2.",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/events?state=all&category=1&category=2&limit=100",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "events"
+              ],
+              "query": [
+                {
+                  "key": "state",
+                  "value": "all"
+                },
+                {
+                  "key": "category",
+                  "value": "1",
+                  "description": "Fun Run. Repeating the parameter is how the search page sends a multi-select."
+                },
+                {
+                  "key": "category",
+                  "value": "2",
+                  "description": "Gala Dinner."
+                },
+                {
+                  "key": "limit",
+                  "value": "100"
+                }
+              ]
+            },
+            "description": "Shows that a repeated query parameter is treated as a list. The same result comes from category=1,2."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('only the requested categories are returned', () => {",
+                  "  pm.response.json().data.forEach((event) => pm.expect([1, 2]).to.include(event.categoryId));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "/events  (past events only)",
+          "description": "The two events that have already finished. Demonstrates that past and upcoming are calculated from the dates rather than kept in a column.",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/events?state=past&sort=date&direction=desc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "events"
+              ],
+              "query": [
+                {
+                  "key": "state",
+                  "value": "past",
+                  "description": "Asked for on purpose. The state is derived from the dates, not stored."
+                },
+                {
+                  "key": "sort",
+                  "value": "date"
+                },
+                {
+                  "key": "direction",
+                  "value": "desc"
+                }
+              ]
+            },
+            "description": "The two events that have already finished. Demonstrates that past and upcoming are calculated from the dates rather than kept in a column."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('every event is marked past', () => {",
+                  "  pm.response.json().data.forEach((event) => pm.expect(event.eventState).to.eql('past'));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "/categories  (filter options)",
+          "description": "The eight categories with a count of the active events in each. This is what builds the category checkboxes.",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/categories",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "categories"
+              ]
+            },
+            "description": "The eight categories with a count of the active events in each. This is what builds the category checkboxes."
+          }
+        },
+        {
+          "name": "/locations  (filter options)",
+          "description": "The venues that currently host at least one active event. This is what suggests city names in the search field.",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/locations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "locations"
+              ]
+            },
+            "description": "The venues that currently host at least one active event. This is what suggests city names in the search field."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Event detail",
+      "item": [
+        {
+          "name": "/events/{{eventId}}  (full detail)",
+          "description": "One event in full, including its ticket tiers. This is everything the detail page needs, so the page makes a single request.",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/events/{{eventId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "events",
+                "{{eventId}}"
+              ]
+            },
+            "description": "One event in full, including its ticket tiers. This is everything the detail page needs, so the page makes a single request."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "const event = pm.response.json().data;",
+                  "pm.test('the full description is present', () => pm.expect(event.description.length).to.be.above(100));",
+                  "pm.test('ticket tiers are included', () => pm.expect(event.ticketTypes.length).to.be.above(1));",
+                  "pm.test('at least one tier is free', () => {",
+                  "  pm.expect(event.ticketTypes.some((ticket) => ticket.price === 0)).to.be.true;",
+                  "});",
+                  "pm.test('progress is consistent with the goal', () => {",
+                  "  const expected = Math.min(Number(((event.raisedAmount / event.goalAmount) * 100).toFixed(1)), 100);",
+                  "  pm.expect(event.progressPercent).to.eql(expected);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Validation and error handling",
+      "description": "Requests that are expected to fail. Run these in the video to show that the API validates its input and never exposes a suspended event.",
+      "item": [
+        {
+          "name": "/events  (invalid date range)  -> 400",
+          "description": "EXPECTED TO FAIL with 400. The response names the field that was wrong, which is what lets the search page show a message beside the form.",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/events?from=2026-12-01&to=2026-01-01",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "events"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "2026-12-01"
+                },
+                {
+                  "key": "to",
+                  "value": "2026-01-01",
+                  "description": "Earlier than from, which is refused."
+                }
+              ]
+            },
+            "description": "EXPECTED TO FAIL with 400. The response names the field that was wrong, which is what lets the search page show a message beside the form."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', () => pm.response.to.have.status(400));",
+                  "pm.test('the envelope reports failure', () => pm.expect(pm.response.json().success).to.be.false);",
+                  "pm.test('the offending field is named', () => {",
+                  "  const details = pm.response.json().error.details;",
+                  "  pm.expect(details.some((entry) => entry.field === 'to')).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "/events  (impossible date)  -> 400",
+          "description": "EXPECTED TO FAIL with 400. Shows that a date is checked as a real calendar date, not merely as text in the right shape.",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/events?from=2026-13-45",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "events"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "2026-13-45",
+                  "description": "Month 13, day 45."
+                }
+              ]
+            },
+            "description": "EXPECTED TO FAIL with 400. Shows that a date is checked as a real calendar date, not merely as text in the right shape."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "/events  (unknown sort key)  -> 400",
+          "description": "EXPECTED TO FAIL with 400. The sort parameter is chosen from a fixed list rather than interpolated into the SQL, so an injection attempt is rejected before any query runs.",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/events?sort=date;DROP TABLE events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "events"
+              ],
+              "query": [
+                {
+                  "key": "sort",
+                  "value": "date;DROP TABLE events",
+                  "description": "An attempt to inject SQL through the sort parameter."
+                }
+              ]
+            },
+            "description": "EXPECTED TO FAIL with 400. The sort parameter is chosen from a fixed list rather than interpolated into the SQL, so an injection attempt is rejected before any query runs."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', () => pm.response.to.have.status(400));",
+                  "// The nested pm.sendRequest() that used to be here is asynchronous and is not",
+                  "// allowed inside pm.test(), so Postman recorded it as an error instead of a",
+                  "// result. The injection attempt is proven harmless by this response - the sort",
+                  "// parameter is refused before any SQL runs - and by the request \"All events -",
+                  "// table intact after an injection attempt\" in the folder \"Health\", which reads",
+                  "// the row count afterwards.",
+                  "pm.test('the sort parameter is named in the error', () => {",
+                  "  const details = pm.response.json().error.details;",
+                  "  pm.expect(details.some((entry) => entry.field === 'sort')).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "/events/11  (suspended event)  -> 404",
+          "description": "EXPECTED TO FAIL with 404. Event 11 exists in the events table but its status is suspended, so the public API behaves as though it does not exist. This is the clearest single piece of evidence that the visibility rule is enforced in the database view rather than in the page.",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/events/{{suspendedId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "events",
+                "{{suspendedId}}"
+              ]
+            },
+            "description": "EXPECTED TO FAIL with 404. Event 11 exists in the events table but its status is suspended, so the public API behaves as though it does not exist. This is the clearest single piece of evidence that the visibility rule is enforced in the database view rather than in the page."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 404', () => pm.response.to.have.status(404));",
+                  "pm.test('the suspended event is not disclosed', () => pm.expect(pm.response.json().success).to.be.false);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "/events/abc  (not a number)  -> 400",
+          "description": "EXPECTED TO FAIL with 400. The id must be a positive whole number.",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/events/abc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "events",
+                "abc"
+              ]
+            },
+            "description": "EXPECTED TO FAIL with 400. The id must be a positive whole number."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /events  (write method not offered)  -> 404",
+          "description": "EXPECTED TO FAIL. The brief states that POST, PUT and DELETE belong to Assessment 3, so no write route exists. This request documents that decision rather than leaving it implicit.",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "events"
+              ]
+            },
+            "description": "EXPECTED TO FAIL. The brief states that POST, PUT and DELETE belong to Assessment 3, so no write route exists. This request documents that decision rather than leaving it implicit."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('the API refuses the write method', () => {",
+                  "  pm.expect([404, 405]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

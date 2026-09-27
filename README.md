@@ -60,11 +60,11 @@ Then open **http://localhost:5500/index.html**.
 ### Verify everything at once
 
 ```bash
-node tests/run-tests.js                     # 47 checks using the offline data source
-set TEST_DATA_SOURCE=mysql && node tests/run-tests.js   # the same 47 checks against MySQL
+node tests/run-tests.js                     # 60 checks using the offline data source
+set TEST_DATA_SOURCE=mysql && node tests/run-tests.js   # the same 60 checks against MySQL
 ```
 
-The suite starts its own API instance, then runs **47 checks**: every endpoint,
+The suite starts its own API instance, then runs **60 checks**: every endpoint,
 every search filter, validation and error handling, plus DOM tests that load
 the real HTML pages and confirm the data actually reaches the page (event
 cards, progress bar, ticket prices, filter checkboxes, Clear Filters and the
@@ -135,46 +135,68 @@ powershell -ExecutionPolicy Bypass -File tools\load-database.ps1 -User root
 
 ```
 charity-events-a2/
-鈹溾攢 database/                    Part 1
-鈹? 鈹溾攢 charityevents_db.sql      complete dump - run this one
-鈹? 鈹溾攢 01_schema.sql             database, 6 tables, 2 views
-鈹? 鈹斺攢 02_seed.sql               6 organisations, 8 categories, 11 events, tickets, donations
-鈹溾攢 api/                         Part 2  -> usernameA2-api.zip
-鈹? 鈹溾攢 server.js                 Express application entry point
-鈹? 鈹溾攢 .env.example              configuration template
-鈹? 鈹斺攢 src/
-鈹?    鈹溾攢 db/event_db.js         REQUIRED filename: the MySQL connection
-鈹?    鈹溾攢 repositories/          all SQL (mysql) + offline twin (local)
-鈹?    鈹溾攢 services/              query validation and business rules
-鈹?    鈹溾攢 controllers/           HTTP layer
-鈹?    鈹溾攢 routes/apiRoutes.js    the REST endpoints
-鈹?    鈹溾攢 middleware/            security headers, CORS, rate limit, errors
-鈹?    鈹斺攢 views/api-index.html   human-readable API index
-鈹溾攢 clientside/                  Part 3  -> usernameA2-clientside.zip
-鈹? 鈹溾攢 index.html                Home page
-鈹? 鈹溾攢 search.html               Search events page
-鈹? 鈹溾攢 event.html                Event detail page
-鈹? 鈹溾攢 css/styles.css            one stylesheet, design tokens at the top
-鈹? 鈹溾攢 js/config.js              API base URL
-鈹? 鈹溾攢 js/api.js                 all fetch() calls, one error type
-鈹? 鈹溾攢 js/dom.js                 every DOM builder and formatter
-鈹? 鈹溾攢 js/nav.js                 the menu + footer used on all three pages
-鈹? 鈹溾攢 js/home.js                Home page controller
-鈹? 鈹溾攢 js/search.js              Search page controller
-鈹? 鈹溾攢 js/event.js               Event detail controller
-鈹? 鈹溾攢 js/modal.js               the "under construction" dialog
-鈹? 鈹斺攢 images/*.svg              offline artwork (no external requests)
-鈹溾攢 tests/run-tests.js           automated checks for the whole submission
-鈹溾攢 tools/
-鈹? 鈹溾攢 generate-local-data.js    regenerates the offline data from 02_seed.sql
-鈹? 鈹溾攢 find-mysql.ps1            locates the MySQL installation to use
-鈹? 鈹溾攢 download-mysql-parallel.mjs  downloads the official MySQL ZIP archive
-鈹? 鈹溾攢 install-mysql.ps1         per-user MySQL install (no admin rights)
-鈹? 鈹溾攢 load-database.ps1         loads charityevents_db.sql and verifies it
-鈹? 鈹斺攢 add-mysql-to-user-path.ps1   puts mysql.exe on your user PATH
-鈹溾攢 start-all.cmd                starts MySQL + API + website in three windows
-鈹斺攢 docs/                        report, API docs, ERD, video script
+├─ database/                    Part 1
+│  ├─ charityevents_db.sql      complete dump - run this one
+│  ├─ 01_schema.sql             database, 6 tables, 2 views
+│  └─ 02_seed.sql               6 organisations, 8 categories, 11 events, tickets, donations
+├─ api/                         Part 2  -> usernameA2-api.zip
+│  ├─ server.js                 Express application entry point
+│  ├─ .env.example              configuration template
+│  └─ src/
+│     ├─ db/event_db.js         REQUIRED filename: the MySQL connection
+│     ├─ repositories/          all SQL (mysql) + offline twin (local)
+│     ├─ services/              query validation and business rules
+│     ├─ controllers/           HTTP layer
+│     ├─ routes/apiRoutes.js    the REST endpoints
+│     ├─ middleware/            security headers, CORS, rate limit, errors
+│     └─ views/api-index.html   human-readable API index
+├─ clientside/                  Part 3  -> usernameA2-clientside.zip
+│  ├─ index.html                Home page
+│  ├─ search.html               Search events page
+│  ├─ event.html                Event detail page
+│  ├─ css/styles.css            one stylesheet, design tokens at the top
+│  ├─ js/config.js              API base URL and nav items
+│  ├─ js/api.js                 all fetch() calls, one error type
+│  ├─ js/dom.js                 every DOM builder and formatter
+│  ├─ js/i18n.js                language state, persistence, DOM translation
+│  ├─ js/translations.js        the four dictionaries (236 keys each)
+│  ├─ js/theme.js               light / dark / system
+│  ├─ js/nav.js                 the menu, footer and settings controls
+│  ├─ js/home.js                Home page controller
+│  ├─ js/search.js              Search page controller
+│  ├─ js/event.js               Event detail controller
+│  ├─ js/modal.js               the "under construction" dialog
+│  └─ images/*.svg              offline artwork (no external requests)
+├─ tests/run-tests.js           automated checks for the whole submission
+├─ tools/                       see the table below
+├─ start-all.cmd                starts MySQL + API + website in three windows
+└─ docs/                        report, API docs, ERD, video script
 ```
+
+### What is in `tools/`
+
+Nothing in the running application imports anything here; these are the setup
+scripts and the checks. Each earns its place:
+
+| Tool | Purpose |
+| --- | --- |
+| `install-mysql.ps1` | Installs MySQL Server per-user, without administrator rights |
+| `install-mysql.ps1` also creates | Desktop and Start Menu shortcuts for the server |
+| `find-mysql.ps1` | Locates the MySQL installation and its `my.ini` |
+| `load-database.ps1` | Drops and recreates `charityevents_db` from the SQL dump, then verifies it |
+| `add-mysql-to-user-path.ps1` | Puts `mysql.exe` on the user PATH |
+| `download-mysql-parallel.mjs` | Downloads the official MySQL ZIP with parallel range requests |
+| `generate-local-data.js` | Regenerates the offline seed mirror from `02_seed.sql` |
+| `sync-theme-snippet.mjs` | Keeps the inline theme script in step with `js/theme.js` |
+| `postman-yaml-to-collection.mjs` | Re-exports the Postman collection from its YAML storage |
+| `fix-postman-collection.mjs` | Repairs the collection after an edit in the Postman UI |
+| `check-no-secrets.mjs` | Refuses to publish a repository containing a real credential |
+| `check-contrast.mjs` | Measures every text element against WCAG AA in both themes |
+| `check-translations.mjs` | Fails if the four dictionaries differ or a key is missing |
+| `check-tool-scripts.mjs` | Validates the PowerShell files (syntax, reserved variables) |
+| `check-cmd-files.mjs` | Validates the batch files (quote balance, `goto` labels) |
+| `audit-references.mjs` | Fails if documentation points at a file that does not exist |
+| `find-encoding-damage.mjs` | Detects text mangled by a PowerShell encoding round trip |
 
 ---
 
@@ -183,8 +205,9 @@ charity-events-a2/
 Six tables with primary and foreign keys:
 
 ```
-organizations 鈹€鈹€鈹?categories    鈹€鈹€鈹尖攢鈹€< events >鈹€鈹€鈹攢鈹€< ticket_types
-locations     鈹€鈹€鈹?             鈹斺攢鈹€< donations
+organizations ──┐
+categories    ──┼──< events >──┬──< ticket_types
+locations     ──┘              └──< donations
 ```
 
 * `events.status` (`active` / `suspended` / `cancelled`) is the publishing flag.

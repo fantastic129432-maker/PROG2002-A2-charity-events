@@ -1,0 +1,22 @@
+$kind: collection
+description: |-
+  Read-only REST API for the charity events website.
+
+  Built for PROG2002 Web Development II, Assessment 2.
+
+  Data source : MySQL 8.4, database charityevents_db
+  Base URL    : http://localhost:3000/api
+
+  The API is read-only in Assessment 2: the brief states that POST, PUT and DELETE
+  methods belong to Assessment 3, so no write requests are included here.
+
+  Suggested demo order for the video:
+    1. Health check
+    2. Home page listing (upcoming events)
+    3. Search with all three criteria at once
+    4. The deliberately invalid date range, to show the 400 response
+    5. The suspended event, to show that it is hidden (404)
+variables:
+  baseUrl: http://localhost:3000/api
+  eventId: "1"
+  suspendedId: "11"

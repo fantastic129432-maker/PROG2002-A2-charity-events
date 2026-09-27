@@ -9,17 +9,22 @@ add up to about 13 minutes, which leaves room for pauses and load times.
 
 ## Before you record - checklist
 
+Mechanics are in `video-recording-guide.md` (OBS setup, exact URLs,
+troubleshooting). The short version:
+
 - [ ] MySQL is running and `charityevents_db` exists (`SELECT COUNT(*) FROM events;` returns 11)
 - [ ] API is running: `cd api && npm start`
 - [ ] Client is running: `cd clientside && node serve-clientside.js`
+- [ ] **OBS Studio** open on the `Demo` scene, and the microphone bar moves when you talk
 - [ ] Browser tabs open in this order:
   1. `http://localhost:5500/index.html` (home)
   2. `http://localhost:5500/search.html` (search)
   3. `http://localhost:3000/api/events?state=all&limit=3` (raw JSON)
-  4. `database/01_schema.sql` in MySQL Workbench, with the SCHEMAS panel expanded
-  5. `api/src/routes/apiRoutes.js`, `api/src/repositories/repository.mysql.js` and `clientside/js/search.js` open in your editor
-  6. Postman with the search request saved
-- [ ] Close notifications and other windows
+- [ ] **MySQL Workbench** connected to `charityevents_db`, SCHEMAS expanded so Tables and Views are both visible
+- [ ] **Postman** with the collection imported: `docs/postman/PROG2002-A2-Charity-Events-API.postman_collection.json`
+- [ ] VS Code open on the project: `api/src/db/event_db.js`, `api/src/repositories/repository.mysql.js`, `clientside/js/search.js`
+- [ ] Notifications off (`Win`+`A` > Do not disturb), other applications closed
+- [ ] Browser zoom 110-125%, bookmarks bar hidden
 - [ ] Have your GitHub repository open in one tab to show the commit history
 - [ ] Speak slowly, and state your name and student number at the start
 
@@ -48,8 +53,9 @@ questions matter more than the visual tour.
 
 ### 0:40 - 2:00 | The database schema
 
-**Show:** MySQL Workbench with `charityevents_db` expanded, then
-`database/01_schema.sql`.
+**Show:** MySQL Workbench with `charityevents_db` expanded in the SCHEMAS panel,
+showing both **Tables** and **Views**. Point out that the two views are where the
+rules live. Then `database/01_schema.sql` in VS Code.
 
 > "I designed six tables. `organizations`, `categories` and `locations` are the
 > lookup tables, `events` is the main resource, and `ticket_types` and
@@ -69,16 +75,25 @@ questions matter more than the visual tour.
 > endpoint reads that view, so a suspended event cannot leak out through any
 > endpoint. Let me prove it..."
 
-**Do:** in Workbench, run:
+**Do:** in Workbench, open a new SQL tab and run (the blue **Run** button, top
+right):
 
 ```sql
 USE charityevents_db;
-SELECT event_state, COUNT(*) FROM vw_public_events GROUP BY event_state;
+
+-- eleven rows exist in the table
+SELECT COUNT(*) AS in_table FROM events;
+
+-- but the public view exposes only ten
+SELECT COUNT(*) AS in_view FROM vw_public_events;
+
+-- and this is the one that is hidden
 SELECT event_id, event_name, status FROM events WHERE status <> 'active';
 ```
 
 > "Eleven events exist in the table, but only ten are public - the suspended one
-> is invisible to the website."
+> is invisible to the website. That rule is enforced by the view, not by the
+> page, so it holds for every endpoint at once."
 
 ### 2:00 - 3:00 | The Node connection file and the API structure
 
@@ -103,25 +118,43 @@ SELECT event_id, event_name, status FROM events WHERE status <> 'active';
 
 ### 3:00 - 4:10 | Demo and test a key endpoint in Postman
 
-**Show:** Postman. Send
-`GET http://localhost:3000/api/events?state=all&city=Lismore&category=1&from=2026-01-01`
-and point out the response envelope.
+**Show:** Postman, collection **PROG2002 A2 - Charity Events API**, folder
+**Search page**, request **`GET /events` (three criteria at once)**. Press
+**Send** and point out the status `200 OK`, the response time, then the envelope.
 
 > "This is my search endpoint, which is the most complex one. I am filtering by
 > three criteria at once: the city Lismore, category one, which is Fun Run, and
 > a date range.
 
-> The response has a `meta` object with the total and the applied filters, and
-> a `data` array with the matching events. Only the Riverside Rainbow Fun Run
-> matches, which is correct.
+> The response has a `meta` object with the total and the filters that were
+> actually applied, and a `data` array with the matching events. Only the
+> Riverside Rainbow Fun Run matches, which is correct.
 
-> Now let me show validation." 
+> Postman also runs the assertions I saved with the request, in the Test Results
+> tab - they check the total, the applied filters and the progress figures."
 
-**Do:** send `GET /api/events?from=2026-12-01&to=2026-01-01`
+**Do:** switch to the folder **Validation and error handling**, request
+**`GET /events` (invalid date range) -> 400**, and press **Send**.
 
-> "The API rejects a backwards date range with a 400 and tells the client
-> exactly which field was wrong. The same rules are enforced on the client for
-> a better experience, but the server never trusts the client."
+> "The API rejects a backwards date range with a 400, and the `details` array
+> names the field that was wrong - that is what lets the search page show a
+> message beside the form. The same rules are enforced in the browser for a
+> better experience, but the server never trusts the client."
+
+**Do:** send **`GET /events/11` (suspended event) -> 404** from the same folder.
+
+> "This event exists in the database but its status is suspended, and the public
+> API answers as though it does not exist. The rule is in the database view, so
+> it applies to every endpoint.
+
+> One more, because it is the security point: the sort parameter is chosen from a
+> fixed list rather than pasted into the SQL."
+
+**Do:** send **`GET /events` (unknown sort key) -> 400**, which contains
+`?sort=date;DROP TABLE events`.
+
+> "An injection attempt is rejected before any query runs. You can see in the
+> tests that the events table is still there afterwards."
 
 ### 4:10 - 5:00 | The SQL behind the search
 

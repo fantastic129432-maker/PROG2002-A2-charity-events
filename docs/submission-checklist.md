@@ -68,7 +68,7 @@ not actually verified.
 
 ## D. Automated tests
 
-- [ ] `node tests/run-tests.js` prints `47 passed, 0 failed`
+- [ ] `node tests/run-tests.js` prints `60 passed, 0 failed`
 - [ ] You have run the suite **after** your last code change
 
 ## E. Documentation and deliverables
@@ -118,25 +118,43 @@ not actually verified.
 
 Run these from the project root (`charity-events-a2`):
 
+Replace `username` with your SCU username in the two variables.
+
 ```powershell
-# api zip  (no node_modules, no .env with secrets)
+# api zip  (no node_modules, no .env with secrets, SQL and Postman collection included)
+# Note: the database scripts live at the project root in database\, NOT inside api\,
+# so they have to be copied in separately - the marker needs them for Part 1.
 $api = "usernameA2-api"
+Remove-Item $api -Recurse -Force -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Force $api | Out-Null
 Copy-Item api\* $api -Recurse -Force
 Remove-Item "$api\node_modules" -Recurse -Force -ErrorAction SilentlyContinue
 Remove-Item "$api\.env" -Force -ErrorAction SilentlyContinue
+Copy-Item database "$api\database" -Recurse -Force
+New-Item -ItemType Directory -Force "$api\postman" | Out-Null
+Copy-Item "docs\postman\PROG2002-A2-Charity-Events-API.postman_collection.json" "$api\postman\"
 Compress-Archive -Path $api -DestinationPath "$api.zip" -Force
 
 # clientside zip
 $client = "usernameA2-clientside"
+Remove-Item $client -Recurse -Force -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Force $client | Out-Null
 Copy-Item clientside\* $client -Recurse -Force
 Compress-Archive -Path $client -DestinationPath "$client.zip" -Force
+
+# the staging folders are not part of the repository
+Remove-Item $api, $client -Recurse -Force
 ```
 
-Then verify each one:
+Then verify each one. The zip must contain no `.env` and no `node_modules`:
 
 ```powershell
-Expand-Archive -Path "usernameA2-api.zip" -DestinationPath "_check-api" -Force
-Get-ChildItem -Recurse "_check-api" | Select-Object FullName
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+foreach ($z in @("usernameA2-api.zip", "usernameA2-clientside.zip")) {
+  $a = [System.IO.Compression.ZipFile]::OpenRead((Resolve-Path $z))
+  "{0}: {1} entries" -f $z, $a.Entries.Count
+  $bad = $a.Entries | Where-Object { $_.FullName -match '\\node_modules\\|\\\.env$' }
+  if ($bad) { "  PROBLEM: " + ($bad.FullName -join ', ') } else { "  no .env, no node_modules" }
+  $a.Dispose()
+}
 ```
