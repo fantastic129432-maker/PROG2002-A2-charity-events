@@ -3,7 +3,8 @@ mysql/
 .mysql-install/
 start-mysql.cmd
 stop-mysql.cmd
-start-all.cmd
+# NOTE: start-all.cmd is intentionally NOT ignored. It is the one-click entry
+# point documented in the README, so the marker needs it in the repository.
 
 # Dependencies
 node_modules/
