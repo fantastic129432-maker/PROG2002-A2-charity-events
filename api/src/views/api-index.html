@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Charity Events API - PROG2002 A2</title>
+  <style>
+    :root {
+      --ink: #14303a;
+      --muted: #5b7480;
+      --brand: #0f7b6c;
+      --surface: #f4f8f7;
+      --line: #d7e3e0;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 2.5rem 1.25rem 4rem;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--ink);
+      background: var(--surface);
+      line-height: 1.55;
+    }
+    main { max-width: 900px; margin: 0 auto; }
+    h1 { font-size: 1.9rem; margin: 0 0 .35rem; }
+    p.lede { color: var(--muted); margin: 0 0 2rem; }
+    table { width: 100%; border-collapse: collapse; background: #fff; }
+    caption { text-align: left; font-weight: bold; padding: .75rem 0; }
+    th, td { border: 1px solid var(--line); padding: .6rem .75rem; text-align: left; vertical-align: top; }
+    th { background: #e8f1ef; font-size: .85rem; text-transform: uppercase; letter-spacing: .04em; }
+    code { font-family: Consolas, "Courier New", monospace; font-size: .92rem; }
+    a { color: var(--brand); }
+    .note { margin-top: 2rem; padding: 1rem 1.25rem; background: #fff; border-left: 4px solid var(--brand); }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Charity Events API</h1>
+    <p class="lede">
+      PROG2002 Web Development II &mdash; Assessment 2, Part 2.
+      Node.js + Express + MySQL. Read-only endpoints for Assessment 2.
+    </p>
+
+    <table>
+      <caption>Available endpoints</caption>
+      <thead>
+        <tr><th>Method</th><th>Path</th><th>Purpose</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>GET</td><td><a href="/api/health"><code>/api/health</code></a></td><td>Service and database health check</td></tr>
+        <tr><td>GET</td><td><a href="/api"><code>/api</code></a></td><td>Machine readable index of this API</td></tr>
+        <tr><td>GET</td><td><a href="/api/events"><code>/api/events</code></a></td><td>Filtered list of active events (home + search)</td></tr>
+        <tr><td>GET</td><td><a href="/api/events/upcoming"><code>/api/events/upcoming</code></a></td><td>Current and upcoming events, soonest first</td></tr>
+        <tr><td>GET</td><td><a href="/api/events/1"><code>/api/events/:id</code></a></td><td>Full detail, tickets and goal progress for one event</td></tr>
+        <tr><td>GET</td><td><a href="/api/categories"><code>/api/categories</code></a></td><td>Category filter options with event counts</td></tr>
+        <tr><td>GET</td><td><a href="/api/locations"><code>/api/locations</code></a></td><td>Location filter options with event counts</td></tr>
+        <tr><td>GET</td><td><a href="/api/organization"><code>/api/organization</code></a></td><td>Organisation featured on the home page</td></tr>
+        <tr><td>GET</td><td><a href="/api/stats"><code>/api/stats</code></a></td><td>Headline numbers for the home page</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note">
+      <strong>Client website:</strong> start it separately and open
+      <code>http://localhost:5500/index.html</code>.
+      <br />
+      <strong>Search example:</strong>
+      <code>/api/events?state=all&amp;city=Lismore&amp;category=1&amp;from=2026-09-01</code>
+    </div>
+  </main>
+</body>
+</html>
