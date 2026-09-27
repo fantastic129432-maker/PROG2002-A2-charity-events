@@ -1,0 +1,40 @@
+# MySQL setup artefacts (large or machine specific, never part of the submission)
+mysql/
+.mysql-install/
+start-mysql.cmd
+stop-mysql.cmd
+start-all.cmd
+
+# Dependencies
+node_modules/
+
+# Environment files - never commit real credentials
+.env
+.env.local
+*.env
+
+# Logs
+*.log
+npm-debug.log*
+logs/
+
+# Build and submission artefacts
+*.zip
+_check-api/
+_check-clientside/
+usernameA2-api/
+usernameA2-clientside/
+
+# Editors and operating systems
+.vscode/
+.idea/
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Temporary folders used while running the project
+.tmp/
+.pip/
+.npmcache/
+.npmtmp/
+.edge-profile/

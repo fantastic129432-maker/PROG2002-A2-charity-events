@@ -1,0 +1,22 @@
+{
+  "name": "prog2002-a2-charity-events",
+  "version": "1.0.0",
+  "private": true,
+  "description": "PROG2002 Web Development II - Assessment 2: dynamic charity events website (MySQL + NodeJS/Express REST API + client-side website)",
+  "author": "<your name> (<your SCU username>)",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "test": "node tests/run-tests.js",
+    "check:tools": "node tools/check-tool-scripts.mjs",
+    "check:cmd": "node tools/check-cmd-files.mjs start-all.cmd",
+    "start:api": "node api/server.js",
+    "start:client": "node clientside/serve-clientside.js",
+    "generate:local-data": "node tools/generate-local-data.js"
+  },
+  "devDependencies": {
+    "jsdom": "^24.1.0"
+  }
+}
