@@ -26,6 +26,13 @@ _check-clientside/
 usernameA2-api/
 usernameA2-clientside/
 
+# The report is submitted to Blackboard as a document, not through this
+# repository, and it carries the student's name and number. It stays on the
+# machine but out of the history, so this rule stops `git add -A` picking it up
+# again. Remove the rule if you would rather keep the report in the repository.
+docs/*.docx
+~$*.docx
+
 # Editors and operating systems
 .vscode/
 .idea/
