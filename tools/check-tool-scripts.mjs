@@ -49,13 +49,23 @@ for (const file of files) {
         problems += 1;
       }
     }
-    // param([string]$home) declarations are just as fatal.
-    const paramDecl = stripped.match(/param\s*\(([^)]*)\)/);
+    // param([string]$home) declarations are just as fatal, but the parameter
+    // list can also contain attribute arguments such as
+    // [Parameter(ValueFromRemainingArguments = $true)], where $true is a value
+    // rather than a name. Only the tokens that begin a parameter are checked:
+    // the first one, and any that follow a comma.
+    const paramDecl = stripped.match(/param\s*\(([\s\S]*?)\)\s*$/);
     if (paramDecl) {
-      for (const name of paramDecl[1].matchAll(/\$([A-Za-z_][A-Za-z0-9_]*)/g)) {
-        if (RESERVED.includes(name[1].toLowerCase())) {
+      const declared = paramDecl[1]
+        .split(',')
+        .map((entry) => entry.match(/\$([A-Za-z_][A-Za-z0-9_]*)/))
+        .filter(Boolean);
+
+      for (const match of declared) {
+        const name = match[1];
+        if (RESERVED.includes(name.toLowerCase())) {
           console.log(
-            `  RESERVED PARAM     line ${index + 1}: $${name[1]} is read-only in PowerShell`
+            `  RESERVED PARAM     line ${index + 1}: $${name} is read-only in PowerShell`
           );
           problems += 1;
         }

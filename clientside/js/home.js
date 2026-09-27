@@ -29,6 +29,7 @@ import {
   formatTime,
 } from './dom.js';
 import { HOME_EVENT_LIMIT } from './config.js';
+import { t, onLanguageChange } from './i18n.js';
 
 /* ------------------------------------------------------------------ */
 /* 1. Startup                                                          */
@@ -42,6 +43,14 @@ document.addEventListener('DOMContentLoaded', () => {
   loadStats();
 
   wireSortControl();
+
+  // Charts, cards and counts are built by this module, so a language change has
+  // to rebuild them: the static markup is re-translated by the i18n module, but
+  // anything already rendered here would otherwise keep its old wording.
+  onLanguageChange(() => {
+    loadEvents();
+    loadStats();
+  });
 });
 
 /* ------------------------------------------------------------------ */
@@ -59,7 +68,7 @@ async function loadEvents() {
   const container = select('#event-list');
   if (!container) return;
 
-  showLoading(container, 'Loading the latest charity events...');
+  showLoading(container, t('home.loadingEvents'));
 
   try {
     const { sort, direction } = currentSortParams();
@@ -70,11 +79,7 @@ async function loadEvents() {
     });
 
     if (!Array.isArray(events) || events.length === 0) {
-      showEmpty(
-        container,
-        'No upcoming events right now',
-        'Please check back soon, or use the search page to look at past events.'
-      );
+      showEmpty(container, t('home.emptyTitle'), t('home.emptyHint'));
       setResultCount(select('#home-event-count'), 0, 0);
       renderHeroPanel([]);
       return;
@@ -84,7 +89,7 @@ async function loadEvents() {
     setResultCount(select('#home-event-count'), events.length, events.length);
     renderHeroPanel(events.slice(0, 3));
   } catch (error) {
-    showError(container, error.friendlyMessage || 'Could not load the events.', error.details);
+    showError(container, error.friendlyMessage || t('error.generic'), error.details);
     renderHeroPanel([]);
   }
 }
@@ -95,7 +100,7 @@ function renderHeroPanel(events) {
   if (!list) return;
 
   if (events.length === 0) {
-    list.replaceChildren(el('li', { text: 'No upcoming events are listed at the moment.' }));
+    list.replaceChildren(el('li', { text: t('home.panelEmpty') }));
     return;
   }
 
@@ -158,10 +163,10 @@ async function loadStats() {
     const stats = await getStats();
 
     const cards = [
-      { value: String(stats.upcomingEvents), label: 'Upcoming events listed' },
-      { value: String(stats.organizations), label: 'Partner charities' },
-      { value: formatCompactCurrency(stats.totalRaised), label: 'Raised through events' },
-      { value: formatCompactCurrency(stats.activeGoal), label: 'Current funding goal' },
+      { value: String(stats.upcomingEvents), label: t('home.statUpcoming') },
+      { value: String(stats.organizations), label: t('home.statPartners') },
+      { value: formatCompactCurrency(stats.totalRaised), label: t('home.statRaised') },
+      { value: formatCompactCurrency(stats.activeGoal), label: t('home.statGoal') },
     ];
 
     panel.replaceChildren(
@@ -179,10 +184,7 @@ async function loadStats() {
     // page must still be usable, so the failure is reported in place.
     console.error('Statistics could not be loaded:', error);
     panel.replaceChildren(
-      el('div', {
-        className: 'stat',
-        text: 'Impact figures are unavailable while the event server is offline.',
-      })
+      el('div', { className: 'stat', text: t('home.statUnavailable') })
     );
   }
 }

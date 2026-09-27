@@ -1111,8 +1111,10 @@ async function testClient() {
       );
     }
 
-    // Both buttons must resolve to the same fill and text colour.
-    const rule = css.match(/\.button--on-dark\s*\{([^}]*)\}/);
+    // Both buttons must resolve to the same fill and text colour. The pattern
+    // anchors to the start of a line so it matches the base rule rather than the
+    // [data-theme='dark'] override further down the file.
+    const rule = css.match(/^\.button--on-dark\s*\{([^}]*)\}/m);
     assert.ok(rule, 'styles.css has no .button--on-dark rule');
     const body = rule[1].replace(/\s+/g, ' ');
     assert.match(body, /background:\s*#ffffff/i, 'the on-dark button needs a white fill');
@@ -1195,6 +1197,176 @@ async function testClient() {
       /\.field__format\s*\{/.test(css),
       'styles.css needs a .field__format rule for the format line'
     );
+  });
+
+  /* ---------------------------------------------------------------- */
+  /* Settings: theme and language                                      */
+  /* ---------------------------------------------------------------- */
+
+  /** Stub matchMedia, which jsdom does not implement. */
+  function stubMatchMedia(window, { prefersDark = false } = {}) {
+    const listeners = [];
+    window.matchMedia = (query) => ({
+      media: query,
+      matches: prefersDark && query.includes('prefers-color-scheme: dark'),
+      addEventListener: (type, callback) => listeners.push(callback),
+      removeEventListener: () => {},
+      addListener: (callback) => listeners.push(callback),
+      removeListener: () => {},
+      onchange: null,
+      dispatchEvent: () => false,
+    });
+  }
+
+  await test('the language switcher offers four languages and applies one', async () => {
+    const { window } = await loadPage({ JSDOM }, 'index.html', {
+      url: 'http://localhost:5500/index.html',
+      apiHandler,
+      beforeInit: (win) => {
+        win.localStorage.setItem('charity-events:language', 'en');
+        stubMatchMedia(win);
+      },
+    });
+
+    const select = window.document.getElementById('language-select');
+    assert.ok(select, 'the header has no language switcher');
+
+    const options = [...select.options].map((option) => option.value);
+    assert.deepEqual(options, ['en', 'zh', 'vi', 'ja'], 'expected English, Chinese, Vietnamese, Japanese');
+
+    // The stored language is applied on load.
+    assert.equal(window.document.documentElement.getAttribute('lang'), 'en-AU');
+
+    // Switching translates the interface and updates <html lang>.
+    select.value = 'ja';
+    select.dispatchEvent(new window.Event('change', { bubbles: true }));
+
+    assert.equal(
+      window.localStorage.getItem('charity-events:language'),
+      'ja',
+      'the choice must be remembered for the other pages'
+    );
+    assert.equal(window.document.documentElement.getAttribute('lang'), 'ja-JP');
+
+    const heading = window.document.querySelector('#events-heading').textContent;
+    assert.match(heading, /[\u3040-\u30ff\u4e00-\u9fff]/, `expected Japanese text, got "${heading}"`);
+    assert.ok(
+      !/Current and upcoming/.test(heading),
+      'the heading was not translated'
+    );
+  });
+
+  await test('a remembered language is applied on the next page load', async () => {
+    const { window } = await loadPage({ JSDOM }, 'search.html', {
+      url: 'http://localhost:5500/search.html',
+      apiHandler,
+      beforeInit: (win) => {
+        win.localStorage.setItem('charity-events:language', 'zh');
+        stubMatchMedia(win);
+      },
+    });
+
+    assert.equal(window.document.documentElement.getAttribute('lang'), 'zh-CN');
+    const title = window.document.querySelector('h1').textContent;
+    assert.match(title, /[\u4e00-\u9fff]/, `expected Chinese text, got "${title}"`);
+    assert.equal(
+      window.document.getElementById('language-select').value,
+      'zh',
+      'the switcher must show the remembered language'
+    );
+  });
+
+  await test('every dictionary covers the same keys', async () => {
+    const source = fs.readFileSync(path.join(CLIENT_DIR, 'js', 'translations.js'), 'utf8');
+    const keysFor = (language) => {
+      const match = source.match(new RegExp(`const ${language} = \\{([\\s\\S]*?)\\n\\};`, 'm'));
+      return new Set([...match[1].matchAll(/^\s*'([^']+)':/gm)].map((entry) => entry[1]));
+    };
+
+    const english = keysFor('en');
+    assert.ok(english.size > 150, `expected a substantial dictionary, got ${english.size} keys`);
+
+    for (const language of ['zh', 'vi', 'ja']) {
+      const keys = keysFor(language);
+      const missing = [...english].filter((key) => !keys.has(key));
+      assert.deepEqual(missing, [], `${language} is missing ${missing.length} key(s)`);
+    }
+  });
+
+  await test('the theme switch cycles and is applied to the document', async () => {
+    const { window } = await loadPage({ JSDOM }, 'index.html', {
+      url: 'http://localhost:5500/index.html',
+      apiHandler,
+      beforeInit: (win) => {
+        win.localStorage.setItem('charity-events:theme', 'light');
+        stubMatchMedia(win);
+      },
+    });
+
+    const root = window.document.documentElement;
+    const button = window.document.getElementById('theme-toggle');
+    assert.ok(button, 'the header has no theme switch');
+    assert.equal(root.getAttribute('data-theme'), 'light', 'the stored theme must be applied on load');
+
+    // light -> dark
+    button.click();
+    assert.equal(root.getAttribute('data-theme'), 'dark');
+    assert.equal(window.localStorage.getItem('charity-events:theme'), 'dark');
+    assert.equal(root.style.colorScheme, 'dark');
+
+    // dark -> system (and the system preference is light in this stub)
+    button.click();
+    assert.equal(window.localStorage.getItem('charity-events:theme'), 'system');
+    assert.equal(root.getAttribute('data-theme'), 'light');
+    assert.equal(root.getAttribute('data-theme-preference'), 'system');
+
+    // system -> light
+    button.click();
+    assert.equal(window.localStorage.getItem('charity-events:theme'), 'light');
+  });
+
+  await test('dark theme is a set of token overrides plus component fixes', async () => {
+    const css = fs.readFileSync(path.join(CLIENT_DIR, 'css', 'styles.css'), 'utf8');
+
+    const darkBlock = css.match(/\[data-theme='dark'\]\s*\{([^}]*)\}/);
+    assert.ok(darkBlock, 'styles.css has no [data-theme="dark"] block');
+    for (const token of ['--surface-0', '--ink-900', '--line', '--brand-900']) {
+      assert.match(
+        darkBlock[1],
+        new RegExp(`${token}:`),
+        `the dark theme should override ${token}`
+      );
+    }
+
+    // The components that were hard-coded white need explicit dark handling.
+    for (const selector of [
+      "\\[data-theme='dark'\\] \\.site-header",
+      "\\[data-theme='dark'\\] input\\[type='date'\\]",
+    ]) {
+      assert.ok(
+        new RegExp(selector).test(css),
+        `the dark theme is missing a rule for ${selector}`
+      );
+    }
+  });
+
+  await test('every page applies the stored theme before the first paint', async () => {
+    for (const file of ['index.html', 'search.html', 'event.html']) {
+      const html = fs.readFileSync(path.join(CLIENT_DIR, file), 'utf8');
+      const bootIndex = html.indexOf('theme-boot');
+      const cssIndex = html.indexOf('css/styles.css');
+
+      assert.ok(bootIndex !== -1, `${file} has no theme boot script`);
+      assert.ok(
+        bootIndex < cssIndex,
+        `${file}: the theme must be applied before the stylesheet, or a dark user sees a white flash`
+      );
+      assert.match(
+        html,
+        /localStorage\.getItem\('charity-events:theme'\)/,
+        `${file}: the boot script must read the same storage key as theme.js`
+      );
+    }
   });
 }
 

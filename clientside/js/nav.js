@@ -18,6 +18,15 @@
  */
 import { NAV_ITEMS, HOME_PAGE } from './config.js';
 import { el, select } from './dom.js';
+import {
+  initI18n,
+  t,
+  setLanguage,
+  getLanguage,
+  onLanguageChange,
+  availableLanguages,
+} from './i18n.js';
+import { initTheme, cycleTheme, getResolvedTheme, getThemePreference, themeLabel, onThemeChange } from './theme.js';
 
 const ORG_NAME = 'Unity Heart Foundation';
 
@@ -43,7 +52,7 @@ function isCurrentItem(item) {
 function navLink(item, { withActiveState = true } = {}) {
   const link = el('a', {
     className: 'site-nav__link',
-    text: item.label,
+    text: t(item.labelKey),
     attributes: { href: item.href },
   });
 
@@ -54,13 +63,109 @@ function navLink(item, { withActiveState = true } = {}) {
   return link;
 }
 
-/** Header: brand, menu, and a mobile-friendly menu toggle. */
+/**
+ * The two settings controls: a language picker and a theme switch.
+ *
+ * Both write to localStorage through their modules, so the choice survives a
+ * move between pages without the URL having to carry it.
+ */
+function buildSettingsBar() {
+  const bar = el('div', { className: 'settings-bar' });
+
+  /* --- language ------------------------------------------------- */
+  const languageGroup = el('div', { className: 'settings-bar__group' });
+  const languageLabel = el('label', {
+    className: 'settings-bar__label',
+    text: `${t('settings.language')}:`,
+    attributes: { for: 'language-select' },
+  });
+
+  const languageSelect = el('select', {
+    className: 'language-select',
+    attributes: {
+      id: 'language-select',
+      'aria-label': t('settings.languageLabel'),
+    },
+  });
+  availableLanguages().forEach((language) => {
+    const option = el('option', {
+      text: language.nativeLabel,
+      attributes: { value: language.code },
+    });
+    if (language.code === getLanguage()) option.setAttribute('selected', 'selected');
+    languageSelect.append(option);
+  });
+  languageSelect.addEventListener('change', (event) => {
+    setLanguage(event.target.value);
+  });
+
+  languageGroup.append(languageLabel, languageSelect);
+
+  /* --- theme ---------------------------------------------------- */
+  const themeGroup = el('div', { className: 'settings-bar__group' });
+  const themeButton = el('button', {
+    className: 'theme-toggle',
+    attributes: {
+      type: 'button',
+      id: 'theme-toggle',
+      'aria-live': 'polite',
+    },
+  });
+  themeButton.addEventListener('click', () => {
+    cycleTheme();
+  });
+
+  themeGroup.append(themeButton);
+
+  /* --- note ----------------------------------------------------- */
+  // Shown only while a language other than English is active, because the event
+  // content itself comes from the database in English.
+  const note = el('p', {
+    className: 'settings-note',
+    attributes: { id: 'settings-note' },
+    text: t('settings.interfaceOnly'),
+  });
+
+  bar.append(languageGroup, themeGroup, note);
+
+  /** Repaint the parts whose text depends on the settings. */
+  const refresh = () => {
+    const resolved = getResolvedTheme();
+    themeButton.replaceChildren(
+      el('span', {
+        className: 'theme-toggle__icon',
+        text: resolved === 'dark' ? '🌙' : '☀️',
+        attributes: { 'aria-hidden': 'true' },
+      }),
+      el('span', {
+        text: `${t('settings.theme')}: ${themeLabel()}`,
+      })
+    );
+    themeButton.setAttribute(
+      'aria-label',
+      `${t('settings.theme')}: ${themeLabel()} (${t('settings.themeSystem')} = ${getThemePreference()})`
+    );
+
+    languageLabel.textContent = `${t('settings.language')}:`;
+    languageSelect.setAttribute('aria-label', t('settings.languageLabel'));
+    note.textContent = t('settings.interfaceOnly');
+    note.hidden = getLanguage() === 'en';
+  };
+
+  refresh();
+  onThemeChange(refresh);
+  onLanguageChange(refresh);
+
+  return bar;
+}
+
+/** Header: brand, menu, settings and a mobile-friendly menu toggle. */
 function buildHeader() {
   const header = el('div', { className: 'site-header__inner' });
 
   const brand = el('a', {
     className: 'brand',
-    attributes: { href: 'index.html', 'aria-label': `${ORG_NAME} home page` },
+    attributes: { href: 'index.html' },
   });
   brand.innerHTML = `
     <span class="brand__mark" aria-hidden="true">
@@ -70,13 +175,14 @@ function buildHeader() {
       </svg>
     </span>
     <span class="brand__text">
-      <strong>${ORG_NAME}</strong>
-      <small>Charity events in your city</small>
+      <strong data-i18n="nav.siteName">${t('nav.siteName')}</strong>
+      <small data-i18n="nav.tagline">${t('nav.tagline')}</small>
     </span>`;
+  brand.setAttribute('aria-label', t('a11y.orgHome', { name: t('nav.siteName') }));
 
   const nav = el('nav', {
     className: 'site-nav',
-    attributes: { id: 'primary-navigation', 'aria-label': 'Main navigation' },
+    attributes: { id: 'primary-navigation' },
   });
 
   const list = el('ul', { className: 'site-nav__list' });
@@ -94,20 +200,29 @@ function buildHeader() {
 
   const toggle = el('button', {
     className: 'site-nav__toggle',
-    html: '<span class="sr-only">Toggle navigation</span><span aria-hidden="true">&#9776;</span>',
     attributes: {
       type: 'button',
       'aria-controls': 'primary-navigation',
       'aria-expanded': 'false',
     },
   });
+  toggle.append(
+    el('span', { className: 'sr-only', text: t('nav.toggle') }),
+    el('span', { text: '☰', attributes: { 'aria-hidden': 'true' } })
+  );
   toggle.addEventListener('click', () => {
     const isOpen = nav.classList.toggle('site-nav--open');
     toggle.setAttribute('aria-expanded', String(isOpen));
   });
 
   nav.append(list);
-  header.append(brand, toggle, nav);
+
+  // The settings bar and the menu share a wrapper so they can wrap together on
+  // a narrow screen instead of pushing the brand around.
+  const right = el('div', { className: 'site-header__nav' });
+  right.append(buildSettingsBar(), nav);
+
+  header.append(brand, toggle, right);
   return header;
 }
 
@@ -116,36 +231,41 @@ function buildFooter() {
   const inner = el('div', { className: 'site-footer__inner' });
 
   const about = el('div', { className: 'site-footer__column' });
-  about.innerHTML = `
-    <h3>${ORG_NAME}</h3>
-    <p>Connecting people who care with causes that matter. Every ticket, donation
-       and volunteer hour stays in the local community.</p>`;
+  about.append(
+    el('h3', { text: t('nav.siteName'), attributes: { 'data-i18n': 'nav.siteName' } }),
+    el('p', { text: t('nav.footerAbout'), attributes: { 'data-i18n': 'nav.footerAbout' } })
+  );
 
   const quick = el('div', { className: 'site-footer__column' });
-  quick.innerHTML = '<h3>Explore</h3>';
+  quick.append(el('h3', { text: t('nav.explore'), attributes: { 'data-i18n': 'nav.explore' } }));
   const quickList = el('ul');
   NAV_ITEMS.forEach((item) => {
     const li = el('li');
-    li.append(el('a', { text: item.label, attributes: { href: item.href } }));
+    li.append(navLink(item, { withActiveState: false }));
     quickList.append(li);
   });
   quick.append(quickList);
 
   const legal = el('div', { className: 'site-footer__column' });
-  legal.innerHTML = `
-    <h3>Student project</h3>
-    <p>Built for PROG2002 Web Development II, Assessment 2.
-       Event details are fictional and for assessment purposes only.</p>`;
+  legal.append(
+    el('h3', {
+      text: t('nav.projectHeading'),
+      attributes: { 'data-i18n': 'nav.projectHeading' },
+    }),
+    el('p', { text: t('nav.projectNote'), attributes: { 'data-i18n': 'nav.projectNote' } })
+  );
 
   const status = el('p', {
     className: 'site-footer__status',
     attributes: { id: 'api-status', role: 'status' },
-    text: 'Checking event server...',
+    text: t('api.checking'),
   });
 
   const bottom = el('div', { className: 'site-footer__bottom' });
   bottom.append(
-    el('p', { text: `© ${new Date().getFullYear()} ${ORG_NAME}. All rights reserved.` }),
+    el('p', {
+      text: `© ${new Date().getFullYear()} ${t('nav.siteName')}. ${t('nav.rights')}`,
+    }),
     status
   );
 
@@ -167,12 +287,10 @@ async function updateApiStatus() {
   try {
     const health = await getHealth();
     const databaseOk = health && health.database && health.database.connected !== false;
-    status.textContent = databaseOk
-      ? 'Event server: online'
-      : 'Event server: running, database unavailable';
+    status.textContent = databaseOk ? t('api.online') : t('api.dbDown');
     status.classList.add(databaseOk ? 'is-online' : 'is-warning');
   } catch (error) {
-    status.textContent = 'Event server: offline';
+    status.textContent = t('api.offline');
     status.classList.add('is-offline');
   }
 }
@@ -238,11 +356,27 @@ async function scrollToHashTarget() {
 
 /** Called by every page. Creates the menu and footer if the placeholders exist. */
 export function initLayout() {
+  // The remembered language and theme must be applied before anything is built,
+  // so the generated menu and footer come out in the right language and the
+  // first paint is already in the right theme.
+  initI18n();
+  initTheme();
+
   const headerHost = select('#site-header');
   if (headerHost) headerHost.replaceChildren(buildHeader());
 
   const footerHost = select('#site-footer');
   if (footerHost) footerHost.replaceChildren(buildFooter());
+
+  // The header and footer are generated once, so they have to be rebuilt when
+  // the language changes. Page content is handled by whichever controller owns
+  // it, through its own onLanguageChange subscription.
+  onLanguageChange(() => {
+    if (headerHost) headerHost.replaceChildren(buildHeader());
+    if (footerHost) footerHost.replaceChildren(buildFooter());
+    updateApiStatus();
+    scrollToHashTarget();
+  });
 
   updateApiStatus();
   scrollToHashTarget();

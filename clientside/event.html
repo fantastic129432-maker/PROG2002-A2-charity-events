@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="Full details, ticket prices and fundraising progress for a charity event." />
   <title>Event details | Unity Heart Foundation</title>
+  <!-- theme-boot -->
+  <script>(function(){try{var p=localStorage.getItem('charity-events:theme')||'system';var d=p==='dark'||(p==='system'&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.setAttribute('data-theme',d?'dark':'light');document.documentElement.setAttribute('data-theme-preference',p);document.documentElement.style.colorScheme=d?'dark':'light';}catch(e){}})();</script>
+  <!-- /theme-boot -->
   <link rel="stylesheet" href="css/styles.css" />
   <link rel="icon" href="images/community.svg" type="image/svg+xml" />
 </head>
@@ -15,9 +18,9 @@
     <div class="container">
       <nav class="breadcrumb" aria-label="Breadcrumb">
         <ol>
-          <li><a href="index.html">Home</a></li>
-          <li><a href="search.html">Search events</a></li>
-          <li aria-current="page" id="breadcrumb-event">Event details</li>
+          <li><a href="index.html" data-i18n="nav.home">Home</a></li>
+          <li><a href="search.html" data-i18n="nav.search">Search Events</a></li>
+          <li aria-current="page" id="breadcrumb-event" data-i18n="event.breadcrumb">Event details</li>
         </ol>
       </nav>
     </div>
@@ -28,7 +31,7 @@
       <div class="container section">
         <div class="state state--loading">
           <div class="spinner" aria-hidden="true"></div>
-          <p>Loading the event details...</p>
+          <p data-i18n="event.loading">Loading the event details...</p>
         </div>
       </div>
     </div>

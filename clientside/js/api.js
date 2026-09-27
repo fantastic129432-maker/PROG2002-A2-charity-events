@@ -12,6 +12,7 @@
  *   * a slow or dead API cannot freeze the page (10 second timeout).
  */
 import { API_BASE_URL } from './config.js';
+import { t } from './i18n.js';
 
 /** Error type thrown by every function in this module. */
 export class ApiError extends Error {
@@ -23,21 +24,24 @@ export class ApiError extends Error {
     this.url = url;
   }
 
-  /** A message that is safe and helpful to display to a member of the public. */
+  /**
+   * A message that is safe and helpful to display to a member of the public.
+   * Translated at the moment it is read, so it follows the language switcher.
+   */
   get friendlyMessage() {
     if (this.status === 404) {
-      return this.message || 'That event could not be found.';
+      return this.message || t('error.notFound');
     }
     if (this.status === 400) {
-      return 'Some of the details you entered were not valid. Please check the form.';
+      return t('error.badRequest');
     }
     if (this.status === 429) {
-      return 'Too many requests were sent. Please wait a moment and try again.';
+      return t('error.rateLimited');
     }
     if (this.status >= 500) {
-      return 'The server had a problem loading this information. Please try again shortly.';
+      return t('error.server');
     }
-    return 'Could not reach the charity events server. Check that the API is running and try again.';
+    return t('error.offline');
   }
 }
 
@@ -82,9 +86,9 @@ export async function getJson(path, params = {}) {
   } catch (error) {
     clearTimeout(timer);
     if (error.name === 'AbortError') {
-      throw new ApiError('The request took too long and was cancelled.', { url });
+      throw new ApiError(t('error.timeout'), { url });
     }
-    throw new ApiError('Could not reach the charity events server.', { url });
+    throw new ApiError(t('error.offline'), { url });
   } finally {
     clearTimeout(timer);
   }

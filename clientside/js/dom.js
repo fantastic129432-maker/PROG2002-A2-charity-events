@@ -15,6 +15,7 @@
  * descriptions cannot inject markup into the page.
  */
 import { IMAGE_BASE_URL, FALLBACK_IMAGE } from './config.js';
+import { t } from './i18n.js';
 
 /* =========================================================================
  * Small helpers
@@ -137,13 +138,12 @@ export function formatDateRange(event) {
 
 /** A short, plain-English label for the derived event state. */
 export function stateLabel(eventState) {
-  return (
-    {
-      upcoming: 'Upcoming',
-      ongoing: 'On now',
-      past: 'Past event',
-    }[eventState] || 'Event'
-  );
+  const key = {
+    upcoming: 'state.upcoming',
+    ongoing: 'state.ongoing',
+    past: 'state.past',
+  }[eventState];
+  return key ? t(key) : t('state.event');
 }
 
 /** Image URL for an event, falling back to a safe default. */
@@ -168,7 +168,7 @@ export function stateBadge(eventState) {
 export function categoryChip(categoryName, slug) {
   return el('span', {
     className: 'chip',
-    text: categoryName || 'Charity event',
+    text: categoryName || t('state.charityEvent'),
     attributes: slug ? { 'data-category': slug } : undefined,
   });
 }
@@ -176,17 +176,17 @@ export function categoryChip(categoryName, slug) {
 /** Price pill: "Free", "From $20.00" or "Tickets closed". */
 export function pricePill(event) {
   if (event.eventState === 'past') {
-    return el('span', { className: 'price price--closed', text: 'Tickets closed' });
+    return el('span', { className: 'price price--closed', text: t('event.ticketsClosed') });
   }
   if (event.isFree) {
-    return el('span', { className: 'price price--free', text: 'Free entry' });
+    return el('span', { className: 'price price--free', text: t('event.freeEntry') });
   }
   if (event.primaryPrice === null || event.primaryPrice === undefined) {
-    return el('span', { className: 'price', text: 'See event page' });
+    return el('span', { className: 'price', text: t('event.seeEventPage') });
   }
   return el('span', {
     className: 'price',
-    text: `From ${formatPrice(event.primaryPrice)}`,
+    text: t('event.fromPrice', { price: formatPrice(event.primaryPrice) }),
   });
 }
 
@@ -202,10 +202,10 @@ export function progressBar(event, { compact = false } = {}) {
 
   const header = el('div', { className: 'progress__header' });
   header.append(
-    el('span', { className: 'progress__label', text: 'Raised so far' }),
+    el('span', { className: 'progress__label', text: t('event.raisedSoFar') }),
     el('span', {
       className: 'progress__percent',
-      text: `${percent.toFixed(0)}% of goal`,
+      text: t('event.percentOfGoal', { percent: percent.toFixed(0) }),
     })
   );
 
@@ -216,7 +216,7 @@ export function progressBar(event, { compact = false } = {}) {
       'aria-valuemin': '0',
       'aria-valuemax': '100',
       'aria-valuenow': String(percent),
-      'aria-label': `Fundraising progress for ${event.eventName}`,
+      'aria-label': t('a11y.progressFor', { name: event.eventName }),
     },
   });
   const fill = el('div', { className: 'progress__fill' });
@@ -224,9 +224,12 @@ export function progressBar(event, { compact = false } = {}) {
   track.append(fill);
 
   const amounts = el('p', { className: 'progress__amounts' });
-  amounts.innerHTML = `<strong>${escapeHtml(formatCurrency(event.raisedAmount))}</strong> raised of ${escapeHtml(
-    formatCurrency(event.goalAmount)
-  )} goal`;
+  // Assembled from the translated template. The amounts are formatted numbers,
+  // but they are escaped anyway so the rule stays uniform.
+  amounts.innerHTML = t('event.raisedOfGoal', {
+    raised: `<strong>${escapeHtml(formatCurrency(event.raisedAmount))}</strong>`,
+    goal: escapeHtml(formatCurrency(event.goalAmount)),
+  });
 
   wrapper.append(header, track, amounts);
 
@@ -234,9 +237,10 @@ export function progressBar(event, { compact = false } = {}) {
     wrapper.append(
       el('p', {
         className: 'progress__meta',
-        text: `Based on ${event.donationCount} recorded donation${
-          event.donationCount === 1 ? '' : 's'
-        }.`,
+        text:
+          event.donationCount === 1
+            ? t('event.basedOnDonationsOne')
+            : t('event.basedOnDonationsMany', { count: event.donationCount }),
       })
     );
   }
@@ -258,13 +262,13 @@ export function eventCard(event) {
     className: 'event-card__media',
     attributes: {
       href: `event.html?id=${encodeURIComponent(event.eventId)}`,
-      'aria-label': `View details for ${event.eventName}`,
+      'aria-label': t('a11y.viewDetailsFor', { name: event.eventName }),
     },
   });
   const image = el('img', {
     attributes: {
       src: imageUrl(event),
-      alt: `Illustration for ${event.eventName}`,
+      alt: t('a11y.eventIllustration', { name: event.eventName }),
       loading: 'lazy',
       width: '640',
       height: '360',

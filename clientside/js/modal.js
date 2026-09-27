@@ -14,6 +14,7 @@
  * it. These are the accessibility details a marker looks for.
  */
 import { el, select } from './dom.js';
+import { t } from './i18n.js';
 
 let dialogElement = null;
 let titleElement = null;
@@ -43,14 +44,14 @@ function buildDialog() {
   const header = el('div', { className: 'modal__header' });
   titleElement = el('h2', {
     className: 'modal__title',
-    text: 'Notice',
+    text: t('common.close'),
     attributes: { id: 'app-modal-title' },
   });
 
   closeButton = el('button', {
     className: 'modal__close',
     html: '<span aria-hidden="true">&times;</span>',
-    attributes: { type: 'button', 'aria-label': 'Close dialog' },
+    attributes: { type: 'button', 'aria-label': t('common.close') },
   });
   closeButton.addEventListener('click', closeModal);
 
@@ -64,7 +65,7 @@ function buildDialog() {
   const footer = el('div', { className: 'modal__footer' });
   const okButton = el('button', {
     className: 'button',
-    text: 'Got it',
+    text: t('common.gotIt'),
     attributes: { type: 'button' },
   });
   okButton.addEventListener('click', closeModal);
@@ -128,10 +129,11 @@ function handleKeydown(event) {
 }
 
 /** Open (or create) the dialog. */
-export function openModal({ title = 'Notice', message = '', html = '', actions = null } = {}) {
+export function openModal({ title = null, message = '', html = '', actions = null } = {}) {
+  const resolvedTitle = title === null ? t('common.gotIt') : title;
   if (!dialogElement) buildDialog();
 
-  titleElement.textContent = title;
+  titleElement.textContent = resolvedTitle;
   if (html) {
     bodyElement.innerHTML = html;
   } else {
@@ -180,17 +182,17 @@ export function closeModal() {
 }
 
 /** The exact message the assessment brief requires for the Register button. */
-export function showUnderConstructionModal(featureName = 'Registering for this event') {
+export function showUnderConstructionModal(featureName = null) {
+  const feature = featureName === null ? t('modal.submitFeature') : featureName;
   return openModal({
-    title: 'Coming soon',
+    title: t('modal.comingSoonTitle'),
     html: `
-      <p class="modal__lead">This feature is currently under construction.</p>
-      <p><strong>${featureName}</strong> and online ticket purchasing are being
-         built in Assessment 3. For now you can still:</p>
+      <p class="modal__lead">${t('modal.comingSoonLead')}</p>
+      <p>${t('modal.comingSoonBody', { feature })}</p>
       <ul>
-        <li>check the ticket prices on this page,</li>
-        <li>see how much has been raised towards the goal, and</li>
-        <li>contact the organisation using the details below.</li>
+        <li>${t('modal.comingSoonItem1')}</li>
+        <li>${t('modal.comingSoonItem2')}</li>
+        <li>${t('modal.comingSoonItem3')}</li>
       </ul>`,
   });
 }

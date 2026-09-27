@@ -65,8 +65,159 @@
   --space-8: 4rem;
 
   --font-body: Arial, "Helvetica Neue", Helvetica, sans-serif;
+
   --container: 1180px;
 }
+
+/* ==========================================================================
+   1b. Dark theme
+   --------------------------------------------------------------------------
+   The whole palette is expressed as custom properties, so the dark theme is one
+   block of overrides rather than a second set of component rules. The attribute
+   is written by js/theme.js (and, before the first paint, by a small inline
+   script in each page's head, which is why there is no flash of white).
+
+   A few components are not driven by tokens alone - the hero gradient, the
+   header's translucent background and the white form controls - and those are
+   adjusted in the block below.
+   ========================================================================== */
+[data-theme='dark'] {
+  /* Brand colours are lifted so they stay legible on a dark surface. */
+  --brand-900: #7fd8c8;
+  --brand-700: #35b9a1;
+  --brand-500: #1c9482;
+  --brand-100: #123b36;
+  --accent-600: #e08a2e;
+  --accent-500: #f0a04b;
+  --accent-100: #3a2a16;
+
+  --ink-900: #eef4f3;
+  --ink-700: #c5d3d2;
+  --ink-500: #93a8a7;
+  --ink-300: #6b7f7e;
+
+  --surface-0: #16211f;
+  --surface-50: #101917;
+  --surface-100: #1c2725;
+  --line: #2c3a38;
+
+  --danger: #f2857c;
+  --danger-bg: #351c19;
+  --success: #74d39a;
+  --success-bg: #16301f;
+  --warning: #e6c06a;
+  --warning-bg: #322915;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 18px 40px rgba(0, 0, 0, 0.55);
+}
+
+/* The header sits on a translucent light surface in the light theme. */
+[data-theme='dark'] .site-header {
+  background: rgba(16, 25, 23, 0.92);
+}
+
+/* The hero keeps its identity but darkens, because the white body text and the
+   white buttons rely on a dark backdrop for contrast. */
+[data-theme='dark'] .hero {
+  background: linear-gradient(
+    120deg,
+    rgba(6, 32, 29, 0.98) 0%,
+    rgba(9, 53, 47, 0.96) 55%,
+    rgba(12, 72, 63, 0.94) 100%
+  );
+}
+
+/* Cards, panels and the hero inset use --surface-0, which is dark above; these
+   elements were also relying on a white default. */
+[data-theme='dark'] .event-card,
+[data-theme='dark'] .panel,
+[data-theme='dark'] .info-card,
+[data-theme='dark'] .stat,
+[data-theme='dark'] .filter-panel,
+[data-theme='dark'] .modal__panel,
+[data-theme='dark'] .state {
+  background: var(--surface-0);
+}
+
+[data-theme='dark'] .ticket {
+  background: var(--surface-100);
+}
+
+[data-theme='dark'] .checkbox-grid {
+  background: var(--surface-50);
+}
+
+/* Form controls were explicitly white. */
+[data-theme='dark'] input[type='text'],
+[data-theme='dark'] input[type='search'],
+[data-theme='dark'] input[type='date'],
+[data-theme='dark'] input[type='number'],
+[data-theme='dark'] input[type='email'],
+[data-theme='dark'] select,
+[data-theme='dark'] textarea,
+[data-theme='dark'] .filter-chip,
+[data-theme='dark'] .site-nav__toggle,
+[data-theme='dark'] .button--outline {
+  background: var(--surface-100);
+  color: var(--ink-900);
+  border-color: var(--line);
+}
+
+/* A date field renders a light calendar icon; invert it so it stays visible. */
+[data-theme='dark'] input[type='date']::-webkit-calendar-picker-indicator {
+  filter: invert(1) opacity(0.75);
+}
+
+/* The button that sits on the dark hero is white in both themes: white text on
+   white would be invisible, so only the hover state changes. */
+[data-theme='dark'] .button--on-dark {
+  background: #ffffff;
+  color: #06201d;
+  border-color: #ffffff;
+}
+[data-theme='dark'] .button--on-dark:hover,
+[data-theme='dark'] .button--on-dark:focus-visible {
+  background: var(--accent-500);
+  color: #2b1600;
+  border-color: var(--accent-500);
+}
+
+[data-theme='dark'] .brand,
+[data-theme='dark'] .brand__text strong,
+[data-theme='dark'] .site-nav__link,
+[data-theme='dark'] .event-card__title a {
+  color: var(--ink-900);
+}
+
+[data-theme='dark'] .site-nav__link:hover {
+  background: var(--surface-100);
+}
+
+[data-theme='dark'] .site-nav__link--active {
+  color: var(--brand-900);
+  background: var(--brand-100);
+}
+
+[data-theme='dark'] .progress__track {
+  background: var(--surface-100);
+}
+
+[data-theme='dark'] .modal__backdrop {
+  background: rgba(0, 0, 0, 0.7);
+}
+[data-theme='dark'] dialog.modal--native::backdrop {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+/* Event artwork is drawn on light backgrounds; a slight dim keeps it from
+   glaring against the dark card. */
+[data-theme='dark'] .event-card__media img,
+[data-theme='dark'] .event-hero__media img {
+  filter: brightness(0.88) saturate(0.95);
+}
+
 
 /* ==========================================================================
    2. Base / reset
@@ -322,6 +473,88 @@ textarea {
 }
 .price--free { color: var(--success); }
 .price--closed { color: var(--ink-500); font-weight: normal; }
+
+/* ==========================================================================
+   4b. Settings: theme and language controls
+   --------------------------------------------------------------------------
+   Two compact controls in the header. The language picker is a native <select>
+   because it is keyboard accessible and behaves correctly on phones without
+   extra code, and the theme switch is a single button that cycles
+   light -> dark -> system so the header does not grow a three-way control.
+   ========================================================================== */
+.site-header__nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.settings-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.settings-bar__group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.settings-bar__label {
+  font-size: 0.78rem;
+  color: var(--ink-500);
+  white-space: nowrap;
+}
+
+/* The visible text of the theme button is the current setting, so it doubles as
+   a status indicator: "Theme: Dark". */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0.35rem 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-0);
+  color: var(--ink-700);
+  font-size: 0.8rem;
+  font-weight: bold;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.theme-toggle:hover {
+  border-color: var(--brand-500);
+  color: var(--brand-900);
+}
+.theme-toggle__icon {
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.language-select {
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-0);
+  color: var(--ink-700);
+  font-size: 0.8rem;
+  width: auto;
+  min-width: 0;
+  max-width: 10.5rem;
+}
+
+/* The note that explains only the interface is translated, shown while the
+   visitor has picked a language other than English. */
+.settings-note {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 0.72rem;
+  color: var(--ink-500);
+  text-align: right;
+}
+.settings-note[hidden] { display: none; }
 
 /* ==========================================================================
    5. Header, navigation, footer

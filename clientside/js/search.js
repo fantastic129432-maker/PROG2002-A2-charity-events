@@ -35,6 +35,7 @@ import {
   setResultCount,
   setFieldMessage,
 } from './dom.js';
+import { t, onLanguageChange } from './i18n.js';
 
 /** Kept so the chip list can show readable labels instead of raw ids. */
 const lookup = {
@@ -56,6 +57,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadFilterOptions();
   applyFiltersFromUrl();
   updateActiveFilterChips();
+
+  // The chips, the results and the messages are all built by this module, so
+  // they are rebuilt when the language changes. The filter options are reloaded
+  // because their count labels are generated too.
+  onLanguageChange(async () => {
+    await loadFilterOptions();
+    updateActiveFilterChips();
+    if (select('#results-list').querySelector('.event-card')) {
+      runSearch();
+    } else {
+      select('#results-hint').textContent = t('search.resultsHint');
+    }
+  });
 });
 
 /* ------------------------------------------------------------------ */
@@ -80,7 +94,9 @@ async function loadFilterOptions() {
     });
 
     if (categories.length === 0) {
-      categoryHost.replaceChildren(el('p', { className: 'field__hint', text: 'No categories found.' }));
+      categoryHost.replaceChildren(
+        el('p', { className: 'field__hint', text: t('search.categoriesEmpty') })
+      );
     } else {
       categoryHost.replaceChildren(
         ...categories.map((category) => {
@@ -103,7 +119,7 @@ async function loadFilterOptions() {
             el('span', { text: category.categoryName }),
             el('span', {
               className: 'checkbox__count',
-              text: `${category.eventCount} event${category.eventCount === 1 ? '' : 's'}`,
+              text: String(category.eventCount),
             })
           );
           return label;
@@ -112,10 +128,7 @@ async function loadFilterOptions() {
     }
   } else {
     categoryHost.replaceChildren(
-      el('p', {
-        className: 'field__hint',
-        text: 'Categories could not be loaded. You can still search by date and location.',
-      })
+      el('p', { className: 'field__hint', text: t('search.categoriesFailed') })
     );
   }
 
@@ -205,21 +218,21 @@ function validateFilters() {
   const isIsoDate = (value) => value === '' || /^\d{4}-\d{2}-\d{2}$/.test(value);
 
   if (!isIsoDate(from)) {
-    setFieldMessage(message, 'The "From" date must be a valid date.');
+    setFieldMessage(message, t('search.invalidFrom'));
     fromField.setAttribute('aria-invalid', 'true');
     valid = false;
   } else if (!isIsoDate(to)) {
-    setFieldMessage(message, 'The "To" date must be a valid date.');
+    setFieldMessage(message, t('search.invalidTo'));
     toField.setAttribute('aria-invalid', 'true');
     valid = false;
   } else if (from && to && to < from) {
-    setFieldMessage(message, 'The "To" date cannot be earlier than the "From" date.');
+    setFieldMessage(message, t('search.reversedRange'));
     toField.setAttribute('aria-invalid', 'true');
     valid = false;
   }
 
   if (valid) {
-    setFieldMessage(message, 'Searching for events...', 'info');
+    setFieldMessage(message, t('search.searching'), 'info');
   }
   return valid;
 }
@@ -233,11 +246,7 @@ async function runSearch() {
   const formMessage = select('#form-message');
 
   if (!validateFilters()) {
-    showEmpty(
-      container,
-      'Please correct the highlighted filter',
-      'The search was not sent because the dates are not valid.'
-    );
+    showEmpty(container, t('search.fixFiltersTitle'), t('search.fixFiltersHint'));
     return;
   }
 
@@ -245,7 +254,7 @@ async function runSearch() {
   updateUrl(params);
   updateActiveFilterChips();
 
-  showLoading(container, 'Searching for matching charity events...');
+  showLoading(container, t('search.loading'));
   setResultCount(countLabel, 0, 0, 'event');
   countLabel.textContent = '';
 
@@ -253,13 +262,9 @@ async function runSearch() {
     const events = await getEvents(params);
 
     if (!Array.isArray(events) || events.length === 0) {
-      showEmpty(
-        container,
-        'No events matched your search',
-        'Try widening the date range, choosing another city, or clearing the category filters.'
-      );
+      showEmpty(container, t('search.noResultsTitle'), t('search.noResultsHint'));
       setResultCount(countLabel, 0, 0);
-      setFieldMessage(formMessage, 'No matching events were found.', 'info');
+      setFieldMessage(formMessage, t('search.noResultsMessage'), 'info');
       return;
     }
 
@@ -267,19 +272,17 @@ async function runSearch() {
     setResultCount(countLabel, events.length, events.length);
     setFieldMessage(
       formMessage,
-      `${events.length} event${events.length === 1 ? '' : 's'} matched your filters.`,
+      events.length === 1
+        ? t('search.eventCountOne', { count: events.length })
+        : t('search.eventCountMany', { count: events.length }),
       'success'
     );
-    select('#results-hint').textContent = 'Results shown below, newest filter first by your sort order.';
+    select('#results-hint').textContent = t('search.resultsHintDone');
   } catch (error) {
     // Any failure from api.js arrives here as an ApiError, so one block of DOM
     // code can report every kind of problem.
-    showError(
-      container,
-      error.friendlyMessage || 'The search could not be completed.',
-      error.details
-    );
-    setFieldMessage(formMessage, error.friendlyMessage || 'Search failed.', 'error');
+    showError(container, error.friendlyMessage || t('error.searchFailed'), error.details);
+    setFieldMessage(formMessage, error.friendlyMessage || t('error.searchFailed'), 'error');
     setResultCount(countLabel, 0, 0);
   }
 }
@@ -306,9 +309,9 @@ function clearFilters() {
   );
   select('#results-sort').value = 'date-asc';
 
-  setFieldMessage(select('#form-message'), 'All filters were cleared.', 'info');
+  setFieldMessage(select('#form-message'), t('search.clearedTitle'), 'info');
   select('#results-count').textContent = '';
-  select('#results-hint').textContent = 'Choose your filters and select Search events.';
+  select('#results-hint').textContent = t('search.resultsHint');
 
   updateActiveFilterChips();
   updateUrl({});
@@ -322,12 +325,7 @@ function clearFilters() {
 /** The neutral panel shown before the first search. */
 function emptyState() {
   const wrapper = el('div', { className: 'state state--empty' });
-  wrapper.append(
-    el('h3', { text: 'Filters cleared' }),
-    el('p', {
-      text: 'Set your criteria again, or press Search events to list every upcoming event.',
-    })
-  );
+  wrapper.append(el('h3', { text: t('search.clearedTitle') }), el('p', { text: t('search.clearedHint') }));
   return wrapper;
 }
 
@@ -340,11 +338,14 @@ function updateActiveFilterChips() {
 
   const chips = [];
 
+  // The dates are read from the form controls rather than from the URL, because
+  // a date input only exposes a value in its own format and the URL is updated
+  // as a side effect of searching.
   const from = select('#filter-from').value;
   const to = select('#filter-to').value;
   if (from || to) {
     chips.push({
-      label: `Dates: ${from || 'any'} to ${to || 'any'}`,
+      label: `${t('search.filterDates')}: ${from || '-'} - ${to || '-'}`,
       clear: () => {
         select('#filter-from').value = '';
         select('#filter-to').value = '';
@@ -355,7 +356,7 @@ function updateActiveFilterChips() {
   const city = select('#filter-city').value.trim();
   if (city) {
     chips.push({
-      label: `Location: ${city}`,
+      label: `${t('search.filterLocation')}: ${city}`,
       clear: () => {
         select('#filter-city').value = '';
       },
@@ -364,7 +365,7 @@ function updateActiveFilterChips() {
 
   selectAll('#category-options input[name="category"]:checked').forEach((input) => {
     chips.push({
-      label: `Category: ${lookup.categories.get(input.value) || input.value}`,
+      label: `${t('search.filterCategory')}: ${lookup.categories.get(input.value) || input.value}`,
       clear: () => {
         input.checked = false;
       },
@@ -373,7 +374,7 @@ function updateActiveFilterChips() {
 
   if (select('#filter-free').checked) {
     chips.push({
-      label: 'Free events only',
+      label: t('search.filterFree'),
       clear: () => {
         select('#filter-free').checked = false;
       },
@@ -381,7 +382,7 @@ function updateActiveFilterChips() {
   }
   if (select('#filter-include-past').checked) {
     chips.push({
-      label: 'Including past events',
+      label: t('search.filterPast'),
       clear: () => {
         select('#filter-include-past').checked = false;
       },
@@ -390,7 +391,7 @@ function updateActiveFilterChips() {
   const keyword = select('#filter-keyword').value.trim();
   if (keyword) {
     chips.push({
-      label: `Keyword: ${keyword}`,
+      label: `${t('search.filterKeyword')}: ${keyword}`,
       clear: () => {
         select('#filter-keyword').value = '';
       },
@@ -402,11 +403,11 @@ function updateActiveFilterChips() {
     return;
   }
 
-  const label = el('span', { className: 'chip-list__label', text: 'Active filters:' });
+  const label = el('span', { className: 'chip-list__label', text: t('search.activeFilters') });
   const buttons = chips.map((chip) => {
     const button = el('button', {
       className: 'filter-chip',
-      attributes: { type: 'button', title: `Remove ${chip.label}` },
+      attributes: { type: 'button', title: t('a11y.removeFilter', { filter: chip.label }) },
     });
     button.append(
       el('span', { text: chip.label }),

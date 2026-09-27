@@ -23,15 +23,17 @@ export const HOME_PAGE = 'index.html';
 /**
  * Nav items used by js/nav.js on every page.
  *
+ * `labelKey` is looked up in js/translations.js rather than holding the text
+ * itself, so the menu follows the language switcher. The English wording also
+ * lives in the HTML, which keeps a page readable before the script runs.
+ *
  * The menu only contains real destinations that are always reachable. The home
  * page still has its About and Contact sections, but they are deliberately not
  * linked from the menu: a fragment link has to be rewritten depending on which
  * page the visitor is on (a bare #about only works on the home page), and that
- * extra conditional behaviour caused more problems than the links were worth
- * for a four page website. The footer still names the section so the content
- * remains discoverable by scrolling.
+ * extra conditional behaviour caused more problems than the links were worth.
  */
 export const NAV_ITEMS = [
-  { href: HOME_PAGE, label: 'Home' },
-  { href: 'search.html', label: 'Search Events' },
+  { href: HOME_PAGE, labelKey: 'nav.home' },
+  { href: 'search.html', labelKey: 'nav.search' },
 ];
