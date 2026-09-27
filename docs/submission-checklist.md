@@ -76,10 +76,21 @@ not actually verified.
 - [ ] `docs/project-report.md` is complete: **every prompt answered in your own
       words**, no leftover `_placeholder_` text and no leftover blockquote prompts
 - [ ] Report uses 12-point Arial with 1.5 line spacing
-- [ ] ER diagram included in the report (export it from MySQL Workbench, or use
-      the Mermaid diagram in `docs/database-design.md`)
+- [ ] ER diagram included in the report. A rendered one is ready at
+      `docs/report-images/06-er-diagram.png`
 - [ ] Screenshots included: home page, search page with results, event detail
-      page, Postman success and Postman 400
+      page, Postman success and Postman 400. The first three are ready in
+      `docs/report-images/`, together with two captures of the live API
+      response; see `docs/report-images/README.md` for which image belongs in
+      which section. Take the two Postman shots yourself during the recording,
+      because the checklist asks for Postman specifically
+- [ ] **These images are not in the report yet.** `PROG2002 A2 Report -
+      completed.docx` currently contains no pictures at all. Insert the six
+      images above and give each one a caption
+- [ ] The report's section titles are bold body text, not Word heading styles,
+      so the document has no navigation pane and no automatic table of
+      contents. Apply **Heading 1** to each section title if the marker expects
+      a structured document
 - [ ] The GenAI declaration is included, with the correct option chosen
 - [ ] `usernameA2-api.zip` built (replace `username` with your SCU username)
 - [ ] `usernameA2-clientside.zip` built
