@@ -35,8 +35,54 @@ $Sql = Join-Path $ProjectRoot 'database\charityevents_db.sql'
 if (-not (Test-Path $Sql)) { throw "SQL file not found: $Sql" }
 
 # --- locate MySQL -----------------------------------------------------------
-$info = @(& (Join-Path $PSScriptRoot 'find-mysql.ps1') -MySQLHome $MySQLHome)
-if ($info.Count -eq 0) { throw 'MySQL was not found. See the warning above.' }
+# find-mysql.ps1 is used when it is present, so a MySQL installation in a
+# non-standard place is still found. When it is missing the script falls back to
+# the usual locations and to mysqld.exe on PATH, which means every tool here is
+# individually replaceable rather than one hard dependency.
+$locator = Join-Path $PSScriptRoot 'find-mysql.ps1'
+$info = @()
+if (Test-Path $locator) {
+    $info = @(& $locator -MySQLHome $MySQLHome)
+}
+
+if ($info.Count -eq 0) {
+    $candidates = @()
+    if ($MySQLHome) { $candidates += $MySQLHome }
+    if ($env:MYSQL_HOME) { $candidates += $env:MYSQL_HOME }
+    foreach ($root in @(
+            (Join-Path $env:ProgramFiles 'MySQL'),
+            (Join-Path ${env:ProgramFiles(x86)} 'MySQL'))) {
+        if ($root -and (Test-Path $root)) {
+            Get-ChildItem $root -Directory -ErrorAction SilentlyContinue |
+                Where-Object { Test-Path (Join-Path $_.FullName 'bin\mysqld.exe') } |
+                Sort-Object Name -Descending |
+                ForEach-Object { $candidates += $_.FullName }
+        }
+    }
+    $candidates += (Join-Path $env:USERPROFILE 'mysql')
+
+    foreach ($candidate in $candidates) {
+        if ($candidate -and (Test-Path (Join-Path $candidate 'bin\mysqld.exe'))) {
+            $info = @((Resolve-Path $candidate).Path)
+            break
+        }
+    }
+
+    # The official installer keeps my.ini under ProgramData, whose folder name
+    # carries the version, so it is discovered rather than assumed.
+    if ($info.Count -eq 1) {
+        $programData = Join-Path $env:ProgramData 'MySQL'
+        if (Test-Path $programData) {
+            $found = Get-ChildItem $programData -Recurse -Filter 'my.ini' -ErrorAction SilentlyContinue |
+                     Select-Object -First 1
+            if ($found) { $info += $found.FullName }
+        }
+    }
+}
+
+if ($info.Count -eq 0) {
+    throw 'MySQL was not found. Install it with the official installer, or pass -MySQLHome "C:\path\to\mysql".'
+}
 $MySQLHome = $info[0]
 $MyIni = if ($info.Count -gt 1) { $info[1] } else { '' }
 

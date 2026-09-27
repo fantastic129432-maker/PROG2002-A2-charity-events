@@ -62,8 +62,7 @@ language other than English is selected:
 | `css/styles.css` | The `[data-theme='dark']` token overrides and component fixes |
 | `tools/check-translations.mjs` | Fails if the four dictionaries differ, or if markup references a missing key |
 | `tools/sync-theme-snippet.mjs` | Keeps the inline theme script in the three pages in step with `js/theme.js` |
-| `tools/probe-settings.mjs` | Drives both controls in a real browser and reports the result |
-| `tools/inventory-strings.mjs` | Lists every user-visible string, to build or audit a dictionary |
+| `tools/check-contrast.mjs` | Measures the contrast of every text element in both themes |
 
 ---
 
@@ -147,9 +146,10 @@ so it does not glare against a dark card.
 ### Automated
 
 ```bash
-node tests/run-tests.js            # 58 checks, including six for the settings
+node tests/run-tests.js            # 60 checks, including six for the settings
 node tools/check-translations.mjs  # dictionary completeness
 node tools/sync-theme-snippet.mjs --check
+node tools/check-contrast.mjs      # contrast in both themes
 ```
 
 The six settings checks cover: four language options are offered and a switch
@@ -159,15 +159,19 @@ light → dark → system and is stored; the dark theme is a set of token overri
 plus the component fixes; and every page applies the theme before the
 stylesheet.
 
-### In a real browser
+### Manually
 
-```bash
-node tools/probe-settings.mjs --lang ja --theme dark --shot .shots/ja-dark.png
+Open the site and use the two controls in the header. The theme defaults to
+following the operating system, so setting Windows to a dark app mode is enough
+to see the dark theme without touching the switch. Language can also be forced
+with a query string, which is handy for a screenshot or a demonstration:
+
+```
+http://localhost:5500/index.html?lang=ja
 ```
 
-It primes `localStorage` before the page loads, reports the applied language and
-theme, switches language through the control, clicks the theme button, reloads
-to confirm both choices persist, and can save a screenshot.
+`?lang=` accepts `en`, `zh`, `vi` and `ja`, and takes precedence over the stored
+choice for that page load.
 
 ---
 

@@ -287,9 +287,8 @@ assessment caveat about machine-written translations.
 Check them with:
 
 ```bash
-node tools/check-translations.mjs                  # four dictionaries, same keys
-node tools/sync-theme-snippet.mjs --check          # inline theme script in step
-node tools/probe-settings.mjs --lang ja --theme dark --shot .shots/ja-dark.png
+node tools/check-translations.mjs            # four dictionaries, same keys
+node tools/sync-theme-snippet.mjs --check    # inline theme script in step
 ```
 
 ---
