@@ -251,9 +251,11 @@ Full parameter list, sample responses and status codes:
 | `docs/api-documentation.md` | Every endpoint, parameter and response |
 | `docs/project-report.md` | Project report - **answer the prompts in your own words** |
 | `docs/video-script.md` | Demo video script mapped to the three required questions |
+| `docs/video-recording-guide.md` | How to record it on this machine: the tool, the setup, the exact URLs |
 | `docs/genai-declaration.md` | The declaration statement to include |
 | `docs/submission-checklist.md` | Pre-submission checklist |
 | `docs/settings-theme-and-language.md` | The dark theme and the four language switcher |
+| `docs/browser-behaviours.md` | Two browser behaviours that look like bugs, and the evidence |
 
 ---
 
