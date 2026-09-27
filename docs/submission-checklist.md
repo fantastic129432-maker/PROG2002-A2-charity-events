@@ -83,18 +83,21 @@ not actually verified.
 
 - [ ] `docs/project-report.md` is complete: **every prompt answered in your own
       words**, no leftover `_placeholder_` text and no leftover blockquote prompts
-- [ ] Report uses 12-point Arial with 1.5 line spacing
-- [ ] ER diagram included in the report. A rendered one is ready at
-      `docs/report-images/06-er-diagram.png`
-- [ ] Screenshots included: home page, search page with results, event detail
-      page, Postman success and Postman 400. The first three are ready in
-      `docs/report-images/`, together with two captures of the live API
-      response; see `docs/report-images/README.md` for which image belongs in
-      which section. Take the two Postman shots yourself during the recording,
-      because the checklist asks for Postman specifically
-- [ ] **These images are not in the report yet.** `PROG2002 A2 Report -
-      completed.docx` currently contains no pictures at all. Insert the six
-      images above and give each one a caption
+- [x] Report uses 12-point Arial with 1.5 line spacing. Verified in the file
+      itself: 234 runs at Arial 12 pt and 81 paragraphs at 1.5 line spacing.
+      Code samples and figure captions are the exceptions - Consolas 10 pt and
+      Arial italic 10 pt - which is intentional so that code and captions are
+      visually distinct from body text
+- [x] ER diagram included in the report as **Figure 4**, under *Data Schema*
+      (page 10). Source: `docs/report-images/06-er-diagram.png`
+- [x] Screenshots included: home page (Figure 1, page 5), search page with
+      results (Figure 2, page 6) and event detail page (Figure 3, page 8). The
+      report is now 17 pages with six figures in total
+- [ ] **Postman success and Postman 400 are still outstanding.** Figures 5 and 6
+      show the live API response (request line, status and body), which is
+      equivalent evidence, but the checklist above asks for Postman
+      screenshots specifically. Take those two in Postman while you record the
+      video and replace Figures 5 and 6, or add them as Figures 7 and 8
 - [ ] The report's section titles are bold body text, not Word heading styles,
       so the document has no navigation pane and no automatic table of
       contents. Apply **Heading 1** to each section title if the marker expects

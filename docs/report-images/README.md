@@ -14,19 +14,30 @@ No application code was changed to produce them.
 The section names below are the bold titles already in
 `PROG2002 A2 Report - completed.docx`.
 
-| # | File | Report section | Suggested caption |
-| --- | --- | --- | --- |
-| 1 | `01-home-page.png` | **Home page** | Figure 1. The home page: headline, next events, live impact figures and the upcoming event cards. |
-| 2 | `02-search-results.png` | **Search page** | Figure 2. The search page with all three criteria applied (Lismore, Fun Run, 2026) and one matching event. |
-| 3 | `03-event-detail.png` | **Event detail page** | Figure 3. The event detail page: description, venue, times, goal against progress, ticket tiers and Register. |
-| 4 | `04-api-success-200.png` | **One endpoint in detail: GET /api/events** | Figure 4. `GET /api/events` with the three filters combined, returning HTTP 200 and the JSON envelope. |
-| 5 | `05-api-error-400.png` | **Errors** | Figure 5. A reversed date range is rejected with HTTP 400 and the offending field named in `details`. |
-| 6 | `06-er-diagram.png` | **Data Schema** (or **Relationships and integrity**) | Figure 6. Entity relationship diagram for `charityevents_db`. |
+**These images are already inserted in the report**, with the captions below and
+the figure numbers shown. The numbers follow the order the figures appear in the
+document, not the order of the file names.
+
+| # | File | Report section | Page | Caption in the report |
+| --- | --- | --- | --- | --- |
+| 1 | `01-home-page.png` | **Home page** | 5 | Figure 1. The home page: headline, next events, live impact figures and the upcoming event cards. |
+| 2 | `02-search-results.png` | **Search page** | 6 | Figure 2. The search page with all three criteria applied (Lismore, Fun Run, 2026) and the one event that matches. |
+| 3 | `03-event-detail.png` | **Event detail page** | 8 | Figure 3. The event detail page: description, venue, times, goal against progress, ticket tiers and Register. |
+| 4 | `06-er-diagram.png` | **Data Schema** | 10 | Figure 4. Entity relationship diagram for `charityevents_db`, showing the six tables and five relationships. |
+| 5 | `04-api-success-200.png` | **One endpoint in detail: GET /api/events** | 15 | Figure 5. `GET /api/events` with the three filters combined, returning HTTP 200 and the JSON envelope. |
+| 6 | `05-api-error-400.png` | **Errors** | 16 | Figure 6. A reversed date range is rejected with HTTP 400 and the offending field named in `details`. |
 
 The ER diagram is rendered from the Mermaid source in
 `docs/database-design.md`, so it always matches the written design. If you
 prefer the MySQL Workbench version, use **Database > Reverse Engineer** and
 export that instead - both show the same six tables and five relationships.
+
+The page numbers are what Word reports for the current text. They will shift if
+you add or remove paragraphs, so treat them as a guide rather than a contract.
+Each picture is centred, sized to the text width (or to 7 inches tall for the
+two tall ones), and followed by its caption. Every picture also carries the
+caption text as its alt text, so a screen reader reads the description rather
+than "image".
 
 ## What the images show
 
