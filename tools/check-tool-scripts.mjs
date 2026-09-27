@@ -49,14 +49,16 @@ for (const file of files) {
         problems += 1;
       }
     }
-    // param([string]$home) declarations are just as fatal, but the parameter
-    // list can also contain attribute arguments such as
-    // [Parameter(ValueFromRemainingArguments = $true)], where $true is a value
-    // rather than a name. Only the tokens that begin a parameter are checked:
-    // the first one, and any that follow a comma.
-    const paramDecl = stripped.match(/param\s*\(([\s\S]*?)\)\s*$/);
+    // param([string]$home) declarations are just as fatal, but a parameter list
+    // also contains attribute blocks such as
+    // [Parameter(ValueFromRemainingArguments = $true)] or [switch], where $true
+    // is a value and not a name. Attributes are stripped first, then only the
+    // tokens that begin a parameter - the first, and any after a comma - are
+    // treated as names.
+    const paramDecl = stripped.match(/param\s*\(([\s\S]*)\)\s*$/);
     if (paramDecl) {
-      const declared = paramDecl[1]
+      const withoutAttributes = paramDecl[1].replace(/\[[^\]]*\]/g, '');
+      const declared = withoutAttributes
         .split(',')
         .map((entry) => entry.match(/\$([A-Za-z_][A-Za-z0-9_]*)/))
         .filter(Boolean);
