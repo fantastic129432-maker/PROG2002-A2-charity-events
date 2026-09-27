@@ -63,8 +63,16 @@ not actually verified.
 - [ ] **Detail page**: goal vs. progress bar with real figures
 - [ ] **Detail page**: **Register** shows "This feature is currently under construction."
 - [ ] No AngularJS anywhere (the brief forbids it for A2)
-- [ ] The three pages work at 360 px, 768 px and 1440 px wide
-- [ ] Tested in at least two browsers (for example Edge and Chrome/Firefox)
+- [x] The three pages work at 360 px, 768 px and 1440 px wide. Verified with a
+      headless browser: all nine page/width combinations report **0 px** of
+      horizontal overflow, with no element extending past the viewport
+- [ ] Tested in at least two browsers. **Only Microsoft Edge is installed on this
+      machine**, so this cannot be ticked as written. The brief does not ask for
+      it, and Edge and Chrome share the same engine, so the meaningful second
+      test would be Firefox - install it and open the three pages if you want
+      the stronger claim. The report's *Legibility, responsiveness and
+      accessibility* section describes measured contrast, not browser coverage,
+      so nothing in the report overstates this
 
 ## D. Automated tests
 
