@@ -31,6 +31,16 @@
   --accent-500: #f0a04b;
   --accent-100: #fdf1e3;
 
+  /* Foreground for text placed on a bright accent fill (the filled buttons,
+     the category chip, the upcoming badge). Defined per theme on purpose: a
+     token that flips cannot be paired with another token that also flips. */
+  --on-brand: #ffffff;
+
+  /* Fill for the amber chip and the secondary button. Amber is too light to
+     carry white text at 4.5:1, so the light theme darkens the fill and the dark
+     theme brightens it and uses dark ink instead. */
+  --chip-bg: #a85a0c;
+
   --ink-900: #10242b;
   --ink-700: #2c4a53;
   --ink-500: #5b7480;
@@ -91,6 +101,10 @@
   --accent-500: #f0a04b;
   --accent-100: #3a2a16;
 
+  /* On a bright teal or amber fill, deep ink reads; white does not. */
+  --on-brand: #06201d;
+  --chip-bg: #f0a04b;
+
   --ink-900: #eef4f3;
   --ink-700: #c5d3d2;
   --ink-500: #93a8a7;
@@ -118,10 +132,15 @@
   background: rgba(16, 25, 23, 0.92);
 }
 
+[data-theme='dark'] .hero .hero__eyebrow {
+  background: rgba(255, 255, 255, 0.14);
+}
+
 /* The hero keeps its identity but darkens, because the white body text and the
    white buttons rely on a dark backdrop for contrast. */
 [data-theme='dark'] .hero {
-  background: linear-gradient(
+  background-color: #041512;
+  background-image: linear-gradient(
     120deg,
     rgba(6, 32, 29, 0.98) 0%,
     rgba(9, 53, 47, 0.96) 55%,
@@ -216,6 +235,57 @@
 [data-theme='dark'] .event-card__media img,
 [data-theme='dark'] .event-hero__media img {
   filter: brightness(0.88) saturate(0.95);
+}
+
+/*
+ * The footer is a dark block in BOTH themes.
+ *
+ * In the light theme its background is var(--brand-900), a deep teal. The dark
+ * theme inverts that token to a light teal (so headings stay readable on dark
+ * surfaces), which would turn the footer into a bright panel with white text on
+ * it - effectively invisible. The footer therefore pins its own background and
+ * keeps the light-on-dark text it was designed for.
+ */
+[data-theme='dark'] .site-footer {
+  background: #071a18;
+  color: #d9ece8;
+  border-top: 1px solid var(--line);
+}
+
+[data-theme='dark'] .site-footer h3 {
+  color: #ffffff;
+}
+
+[data-theme='dark'] .site-footer p,
+[data-theme='dark'] .site-footer__status {
+  color: #b9d8d2;
+}
+
+[data-theme='dark'] .site-footer a {
+  color: #d9ece8;
+}
+
+[data-theme='dark'] .site-footer a:hover {
+  color: #ffffff;
+}
+
+[data-theme='dark'] .site-footer__bottom {
+  border-top-color: rgba(255, 255, 255, 0.15);
+}
+
+[data-theme='dark'] .site-footer__status.is-online { color: #8fe0b6; }
+[data-theme='dark'] .site-footer__status.is-warning { color: #f6cf88; }
+[data-theme='dark'] .site-footer__status.is-offline { color: #f3a6a1; }
+
+/* A past-event badge used a light grey that glares against a dark card, and a
+   heading that links out of a card needs the inverted brand colour. */
+[data-theme='dark'] .badge--past {
+  background: var(--surface-100);
+  color: var(--ink-500);
+}
+
+[data-theme='dark'] .event-card__title a {
+  color: var(--brand-900);
 }
 
 
@@ -363,7 +433,11 @@ textarea {
   border: 1px solid transparent;
   border-radius: 999px;
   background: var(--brand-700);
-  color: #fff;
+  /* --on-brand rather than #fff: the dark theme inverts --brand-700 to a light
+     teal, so white text measured 2.4:1 there. Pairing one flipping token with
+     another flipping token does not help - both have to move together, which is
+     exactly what --on-brand does. */
+  color: var(--on-brand);
   font-weight: bold;
   font-size: 0.95rem;
   cursor: pointer;
@@ -380,9 +454,11 @@ textarea {
 .button:active { transform: translateY(0); }
 
 .button--secondary {
-  background: var(--accent-600);
+  background: var(--chip-bg);
+  /* Same reasoning as the primary button. */
+  color: var(--on-brand);
 }
-.button--secondary:hover { background: #b8650f; }
+.button--secondary:hover { background: var(--ink-700); color: var(--surface-0); }
 
 .button--ghost {
   background: transparent;
@@ -452,7 +528,10 @@ textarea {
   color: var(--ink-700);
 }
 
-.badge--upcoming { background: var(--brand-100); color: var(--brand-900); }
+/* --brand-100 flips to a dark teal and --brand-900 to a light one, so the pair
+   stayed low contrast in the dark theme. A solid fill with --on-brand works in
+   both. */
+.badge--upcoming { background: var(--brand-700); color: var(--on-brand); }
 .badge--ongoing  { background: var(--success-bg); color: var(--success); }
 .badge--past     { background: #eceff1; color: var(--ink-500); }
 
@@ -460,8 +539,8 @@ textarea {
   display: inline-block;
   padding: 0.2rem 0.7rem;
   border-radius: 999px;
-  background: var(--accent-100);
-  color: #8a4a06;
+  background: var(--chip-bg);
+  color: var(--on-brand);
   font-size: 0.78rem;
   font-weight: bold;
 }
@@ -612,7 +691,7 @@ textarea {
 
 .site-nav__toggle {
   display: none;
-  background: #fff;
+  background: var(--surface-0);
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   padding: 0.4rem 0.7rem;
@@ -664,7 +743,9 @@ textarea {
 /* Breadcrumb used on the detail and search pages */
 .breadcrumb {
   font-size: 0.88rem;
-  color: var(--ink-500);
+  /* --ink-700 rather than --ink-500: the breadcrumb sits on the tinted page
+     header, where the lighter grey measured 4.3:1. */
+  color: var(--ink-700);
   margin: var(--space-5) 0 0;
 }
 .breadcrumb ol { display: flex; gap: var(--space-2); list-style: none; padding: 0; margin: 0; }
@@ -674,9 +755,18 @@ textarea {
    6. Home page
    ========================================================================== */
 .hero {
-  background:
-    linear-gradient(120deg, rgba(8, 69, 60, 0.94) 0%, rgba(15, 123, 108, 0.9) 55%, rgba(23, 160, 140, 0.85) 100%);
-  color: #fff;
+  /* The gradient is the visual treatment; this base colour is what the white
+     hero text actually sits on, and it is also the fallback when gradients are
+     unavailable. Without it the computed background is the page colour, which
+     made the hero text measure 1.05:1 in a contrast check. */
+  background-color: var(--brand-900);
+  background-image: linear-gradient(
+    120deg,
+    rgba(8, 69, 60, 0.94) 0%,
+    rgba(15, 123, 108, 0.9) 55%,
+    rgba(23, 160, 140, 0.85) 100%
+  );
+  color: var(--on-brand);
   padding: var(--space-8) 0;
 }
 
@@ -695,6 +785,9 @@ textarea {
   display: inline-block;
   padding: 0.25rem 0.8rem;
   border-radius: 999px;
+  /* The hero is a dark surface in both themes, so this label is pinned to a
+     light colour rather than inheriting one that flips with the theme. */
+  color: #ffffff;
   background: rgba(255, 255, 255, 0.16);
   font-size: 0.78rem;
   font-weight: bold;
@@ -856,6 +949,7 @@ textarea {
   border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
   padding: var(--space-5);
+  background: var(--surface-0);
 }
 
 .filter-panel h2 { font-size: 1.1rem; margin-bottom: var(--space-2); }
@@ -917,7 +1011,8 @@ textarea {
   padding: 0.6rem 0.75rem;
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
-  background: #fff;
+  /* Token rather than #fff so the controls follow the dark theme. */
+  background: var(--surface-0);
 }
 input:focus,
 select:focus,
@@ -944,7 +1039,7 @@ textarea:focus { border-color: var(--brand-500); }
   font-size: 0.9rem;
   cursor: pointer;
 }
-.checkbox:hover { background: var(--brand-100); }
+.checkbox:hover { background: var(--surface-100); }
 .checkbox input { width: auto; margin: 0; }
 .checkbox__count { margin-left: auto; color: var(--ink-500); font-size: 0.8rem; }
 
@@ -993,7 +1088,7 @@ textarea:focus { border-color: var(--brand-500); }
    9. Event detail page
    ========================================================================== */
 .event-hero {
-  background: #fff;
+  background: var(--surface-0);
   border-bottom: 1px solid var(--line);
   padding: var(--space-6) 0 var(--space-7);
 }
@@ -1068,7 +1163,7 @@ textarea:focus { border-color: var(--brand-500); }
 }
 .progress__amounts { margin: var(--space-3) 0 0; font-size: 0.9rem; color: var(--ink-700); }
 .progress__amounts strong { color: var(--brand-900); font-size: 1.05rem; }
-.progress__meta { margin: var(--space-1) 0 0; font-size: 0.8rem; color: var(--ink-500); }
+.progress__meta { margin: var(--space-1) 0 0; font-size: 0.8rem; color: var(--ink-700); }
 .progress--compact .progress__header { font-size: 0.78rem; }
 .progress--compact .progress__track { height: 8px; }
 .progress--compact .progress__amounts { font-size: 0.82rem; }
@@ -1086,7 +1181,13 @@ textarea:focus { border-color: var(--brand-500); }
 .ticket__name { font-weight: bold; }
 .ticket__desc { display: block; color: var(--ink-500); font-size: 0.84rem; font-weight: normal; }
 .ticket__price { font-weight: bold; color: var(--brand-900); white-space: nowrap; }
-.ticket--free { border-color: var(--brand-500); background: var(--brand-100); }
+.ticket--free {
+  border-color: var(--brand-500);
+  /* A left accent bar instead of a tinted fill: the tint flipped to near-black
+     in the dark theme and swallowed the ticket description inside it. */
+  background: var(--surface-50);
+  border-left: 4px solid var(--brand-500);
+}
 .ticket__availability { display: block; font-size: 0.78rem; color: var(--ink-500); font-weight: normal; }
 
 .register-note { color: var(--ink-500); font-size: 0.84rem; margin: var(--space-3) 0 0; }
@@ -1143,7 +1244,7 @@ dialog.modal--native::backdrop { background: rgba(8, 34, 30, 0.55); }
 
 .modal__panel {
   position: relative;
-  background: #fff;
+  background: var(--surface-0);
   border-radius: var(--radius);
   box-shadow: var(--shadow-lg);
   width: 100%;
@@ -1188,7 +1289,7 @@ body.modal-open { overflow: hidden; }
   grid-column: 1 / -1;
   text-align: center;
   padding: var(--space-7) var(--space-5);
-  background: #fff;
+  background: var(--surface-0);
   border: 1px dashed var(--line);
   border-radius: var(--radius);
 }
@@ -1217,7 +1318,13 @@ body.modal-open { overflow: hidden; }
 }
 
 .skeleton {
-  background: linear-gradient(90deg, var(--surface-100) 25%, #f8fbfa 50%, var(--surface-100) 75%);
+  /* The mid stop is a token so the shimmer does not flash white in dark mode. */
+  background: linear-gradient(
+    90deg,
+    var(--surface-100) 25%,
+    var(--surface-0) 50%,
+    var(--surface-100) 75%
+  );
   background-size: 200% 100%;
   animation: shimmer 1.4s infinite;
   border-radius: var(--radius-sm);

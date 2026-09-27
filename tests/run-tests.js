@@ -1368,6 +1368,136 @@ async function testClient() {
       );
     }
   });
+
+  await test('no rule paints light text on a background that flips to light', async () => {
+    /*
+     * This is the defect that produced the unreadable footer.
+     *
+     * The dark theme inverts the brand tokens, so --brand-900 becomes a LIGHT
+     * teal. Any rule that used it as a background and painted light text on top
+     * was designed for a dark surface and collapses once the token flips. The
+     * same trap applies to --brand-700 for buttons.
+     *
+     * The rule below therefore fails the build if such a pair appears without a
+     * dark-theme override.
+     */
+    const css = fs.readFileSync(path.join(CLIENT_DIR, 'css', 'styles.css'), 'utf8');
+
+    // Strip comments so prose about tokens is not parsed as CSS.
+    const withoutComments = css.replace(/\/\*[\s\S]*?\*\//g, '');
+
+    const TOKENS_THAT_FLIP_TO_LIGHT = ['--brand-900', '--brand-700', '--accent-600'];
+    const LIGHT_TEXT = /color:\s*(#fff(?:fff)?|white|var\(--on-brand\))/i;
+
+    /*
+     * Pairs that are safe even though the background token flips.
+     *
+     * --on-brand is itself theme-aware: it is the same value as --brand-900
+     * (near-white in the light theme, deep ink in the dark one), so a fill and
+     * an --on-brand label always move together and stay opposite. It was
+     * introduced precisely to replace the broken pairs below, and the real
+     * contrast of these controls is measured by tools/check-contrast.mjs.
+     */
+    const SAFE_WITH_ON_BRAND = [
+      '.button',            // solid teal fill, label follows the theme
+      '.badge--upcoming',   // same pattern for the status badge
+      '.hero',              // the base colour under the hero gradient
+    ];
+
+    const rules = [];
+    for (const match of withoutComments.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+      const selector = match[1].replace(/\s+/g, ' ').trim();
+      if (!selector || selector.startsWith('@')) continue;
+      rules.push({ selector, body: match[2] });
+    }
+
+    const offenders = [];
+    for (const rule of rules) {
+      const background = rule.body.match(/background(?:-color)?:\s*([^;]+);/);
+      if (!background) continue;
+
+      const token = TOKENS_THAT_FLIP_TO_LIGHT.find((name) => background[1].includes(`var(${name})`));
+      if (!token) continue;
+
+      const colour = rule.body.match(/(?:^|;)\s*color:\s*([^;]+);/);
+      if (!colour || !LIGHT_TEXT.test(`color: ${colour[1]}`)) continue;
+
+      // A dark-theme rule is the fix, so it is allowed.
+      if (rule.selector.includes("[data-theme='dark']")) continue;
+
+      // Elements that live on the dark hero are deliberately light in both
+      // themes; they are pinned by a separate rule that sets the base colour.
+      if (/\.button--on-dark/.test(rule.selector)) continue;
+
+      // The footer is a dark block in both themes, so its light text is correct
+      // as long as the dark theme pins its background as well.
+      if (/^\.site-footer/.test(rule.selector)) {
+        assert.match(
+          withoutComments,
+          /\[data-theme='dark'\]\s*\.site-footer\s*\{[^}]*background:\s*#071a18/,
+          'the footer paints light text on var(--brand-900), so the dark theme must pin its background'
+        );
+        continue;
+      }
+
+      // Safe when the label itself is the theme-aware --on-brand token.
+      if (/var\(--on-brand\)/.test(colour[1]) && SAFE_WITH_ON_BRAND.includes(rule.selector)) {
+        continue;
+      }
+
+      offenders.push(`${rule.selector} -> background ${background[1].trim()}, ${colour[1].trim()}`);
+    }
+
+    assert.deepEqual(
+      offenders,
+      [],
+      `these rules paint light text on a token that becomes light in the dark theme, ` +
+        `so they need either a dark-theme override or a token that does not flip:\n  ` +
+        offenders.join('\n  ')
+    );
+
+    // And the token that exists precisely to avoid the trap must be used.
+    assert.match(
+      withoutComments,
+      /--on-brand:\s*#ffffff/,
+      'the light theme should define --on-brand'
+    );
+    assert.match(
+      withoutComments,
+      /\[data-theme='dark'\][\s\S]{0,400}?--on-brand:\s*#06201d/,
+      'the dark theme should redefine --on-brand so filled controls stay legible'
+    );
+
+    /*
+     * The footer is the case that was actually reported: it paints light text
+     * (by design - it is a dark block) on var(--brand-900), which the dark theme
+     * turns into a LIGHT teal. The fix is to pin its background in the dark
+     * theme to a dark value. If that pin is ever removed or swapped for a
+     * colour token, the footer becomes light-on-light again, so it is asserted
+     * directly rather than left to the loop above.
+     */
+    const footerLightRule = rules.find((rule) => rule.selector === '.site-footer');
+    assert.ok(footerLightRule, 'the base .site-footer rule was not found');
+    assert.match(
+      footerLightRule.body,
+      /background:\s*var\(--brand-900\)/,
+      'the footer is expected to use var(--brand-900) as its base background'
+    );
+
+    const footerDarkRule = rules.find(
+      (rule) => rule.selector === "[data-theme='dark'] .site-footer"
+    );
+    assert.ok(footerDarkRule, 'the dark theme has no .site-footer rule');
+
+    const footerDarkBackground = footerDarkRule.body.match(/background:\s*([^;]+);/);
+    assert.ok(footerDarkBackground, 'the dark footer rule must set a background');
+    assert.doesNotMatch(
+      footerDarkBackground[1],
+      /var\(--(brand|surface|ink|accent|line)/,
+      'the dark footer background must be a pinned dark colour, not a token that ' +
+        'flips - otherwise light text lands on a light footer'
+    );
+  });
 }
 
 /* =====================================================================
