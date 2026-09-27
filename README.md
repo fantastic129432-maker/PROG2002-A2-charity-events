@@ -253,10 +253,48 @@ Full parameter list, sample responses and status codes:
 | `docs/video-script.md` | Demo video script mapped to the three required questions |
 | `docs/genai-declaration.md` | The declaration statement to include |
 | `docs/submission-checklist.md` | Pre-submission checklist |
+| `docs/settings-theme-and-language.md` | The dark theme and the four language switcher |
 
 ---
 
-## 7. Academic integrity
+## 7. Settings: dark theme and language
+
+The header carries two extra controls, both remembered in `localStorage` so the
+choice follows the visitor between pages:
+
+* **Theme** - one button cycling light / dark / follow the system. The palette is
+  already made of custom properties, so the dark theme is one block of overrides
+  plus the components that were hard coded white. A small inline script applies
+  the stored value before the first paint, so a dark user never sees a white
+  flash.
+* **Language** - English, 中文, Tiếng Việt and 日本語, 236 interface strings each.
+  Markup carries `data-i18n` / `data-i18n-attr` attributes and the generated text
+  goes through the same `t()` helper, so event cards, filter chips, the progress
+  bar and every message follow the switch.
+
+**Scope limit, deliberately:** only the interface is translated. Event names,
+descriptions and venues come from the database in English, and a short note in
+the header says so while another language is selected. Translating the content
+would need translated columns or a translations table - a content management
+feature beyond Assessment 2.
+
+These two features are **not required by the brief**; they are additional work on
+top of the three required pages. See
+`docs/settings-theme-and-language.md` for the design notes, the two helper tools
+that keep the dictionaries and the inline theme script honest, and the
+assessment caveat about machine-written translations.
+
+Check them with:
+
+```bash
+node tools/check-translations.mjs                  # four dictionaries, same keys
+node tools/sync-theme-snippet.mjs --check          # inline theme script in step
+node tools/probe-settings.mjs --lang ja --theme dark --shot .shots/ja-dark.png
+```
+
+---
+
+## 8. Academic integrity
 
 GenAI Level 2 applies to this assessment: brainstorming, grammar, paraphrasing,
 formatting and layout templates are permitted; **creating the report or
