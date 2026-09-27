@@ -1,0 +1,1039 @@
+/* ==========================================================================
+   PROG2002 Web Development II - Assessment 2
+   Charity Events website - stylesheet
+   File: css/styles.css
+   --------------------------------------------------------------------------
+   Structure
+     1.  Design tokens (colours, spacing, typography)
+     2.  Base / reset
+     3.  Layout helpers
+     4.  Buttons and badges
+     5.  Header, navigation, footer
+     6.  Home page (hero, mission, stats, event grid)
+     7.  Event card
+     8.  Search page (filter form, results)
+     9.  Event detail page (hero, tickets, goal progress)
+     10. Modal
+     11. Loading / empty / error states
+     12. Responsive rules and accessibility helpers
+   ========================================================================== */
+
+/* ==========================================================================
+   1. Design tokens
+   ========================================================================== */
+:root {
+  /* Brand: a calm teal for trust, warm amber for the "give" accent. */
+  --brand-900: #08453c;
+  --brand-700: #0f7b6c;
+  --brand-500: #17a08c;
+  --brand-100: #e3f3f0;
+  --accent-600: #d97a1a;
+  --accent-500: #f0a04b;
+  --accent-100: #fdf1e3;
+
+  --ink-900: #10242b;
+  --ink-700: #2c4a53;
+  --ink-500: #5b7480;
+  --ink-300: #9db1b8;
+
+  --surface-0: #ffffff;
+  --surface-50: #f6faf9;
+  --surface-100: #eef5f3;
+  --line: #d7e3e0;
+
+  --danger: #b3261e;
+  --danger-bg: #fdecea;
+  --success: #1b6e3c;
+  --success-bg: #e8f6ee;
+  --warning: #8a6100;
+  --warning-bg: #fdf3dc;
+
+  --radius-sm: 6px;
+  --radius: 12px;
+  --radius-lg: 20px;
+  --shadow-sm: 0 1px 2px rgba(16, 36, 43, 0.08), 0 1px 3px rgba(16, 36, 43, 0.06);
+  --shadow: 0 6px 18px rgba(16, 36, 43, 0.1);
+  --shadow-lg: 0 18px 40px rgba(16, 36, 43, 0.16);
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+
+  --font-body: Arial, "Helvetica Neue", Helvetica, sans-serif;
+  --container: 1180px;
+}
+
+/* ==========================================================================
+   2. Base / reset
+   ========================================================================== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/*
+ * No `scroll-behavior: smooth` here on purpose.
+ *
+ * A smooth scroll animation is cancelled when the document height changes while
+ * it runs, and the home page grows each time an event image loads. With smooth
+ * behaviour enabled, a link such as index.html#about could stop part way down
+ * the page with the About section still off screen. Jump links are positioned
+ * instantly instead, which is also what the JavaScript in js/nav.js does.
+ * Users who prefer less motion get instant positioning anyway, so nothing is
+ * lost by removing the animation.
+ */
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--ink-900);
+  background: var(--surface-50);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-body);
+  line-height: 1.25;
+  color: var(--brand-900);
+  margin: 0 0 var(--space-3);
+}
+
+h1 { font-size: clamp(1.9rem, 1.4rem + 1.8vw, 2.9rem); }
+h2 { font-size: clamp(1.5rem, 1.2rem + 1vw, 2.1rem); }
+h3 { font-size: 1.2rem; }
+
+p { margin: 0 0 var(--space-4); }
+a { color: var(--brand-700); text-decoration: none; }
+a:hover { text-decoration: underline; }
+img { max-width: 100%; display: block; }
+ul { margin: 0 0 var(--space-4); padding-left: 1.15rem; }
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 3px solid var(--accent-500);
+  outline-offset: 2px;
+}
+
+/* ==========================================================================
+   3. Layout helpers
+   ========================================================================== */
+.container {
+  width: 100%;
+  max-width: var(--container);
+  margin: 0 auto;
+  padding: 0 var(--space-5);
+}
+
+.section {
+  padding: var(--space-8) 0;
+}
+
+.section--tint {
+  background: var(--surface-0);
+  border-block: 1px solid var(--line);
+}
+
+.section__head {
+  max-width: 720px;
+  margin-bottom: var(--space-6);
+}
+
+.section__eyebrow {
+  display: inline-block;
+  font-size: 0.8rem;
+  font-weight: bold;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--brand-700);
+  margin-bottom: var(--space-2);
+}
+
+.section__lead {
+  color: var(--ink-500);
+  font-size: 1.05rem;
+}
+
+.grid {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.grid--events {
+  grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+}
+
+.grid--stats {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.grid--two {
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ==========================================================================
+   4. Buttons and badges
+   ========================================================================== */
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 0.7rem 1.35rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: var(--brand-700);
+  color: #fff;
+  font-weight: bold;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.button:hover {
+  background: var(--brand-900);
+  text-decoration: none;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.button:active { transform: translateY(0); }
+
+.button--secondary {
+  background: var(--accent-600);
+}
+.button--secondary:hover { background: #b8650f; }
+
+.button--ghost {
+  background: transparent;
+  color: var(--brand-700);
+  border-color: var(--brand-500);
+}
+.button--ghost:hover {
+  background: var(--brand-100);
+  color: var(--brand-900);
+}
+
+/*
+ * Button variant for dark backgrounds (the green hero banner).
+ *
+ * The default variant is a teal fill and --ghost paints teal text, so both
+ * almost disappear against the hero gradient. This single variant is used by
+ * every button that sits on the hero: a solid white fill with dark teal text,
+ * which keeps the contrast ratio high. Both hero actions therefore look
+ * identical, as requested. On hover they invert to the amber accent so the
+ * button still gives clear feedback.
+ */
+.button--on-dark {
+  background: #ffffff;
+  color: var(--brand-900);
+  border-color: #ffffff;
+}
+.button--on-dark:hover,
+.button--on-dark:focus-visible {
+  background: var(--accent-500);
+  color: #4a2600;
+  border-color: var(--accent-500);
+}
+
+.button--outline {
+  background: #fff;
+  color: var(--ink-700);
+  border-color: var(--line);
+}
+.button--outline:hover {
+  background: var(--surface-100);
+  color: var(--ink-900);
+}
+
+.button--small {
+  padding: 0.45rem 0.95rem;
+  font-size: 0.85rem;
+}
+
+.button--block { width: 100%; }
+
+.button[disabled],
+.button[aria-disabled='true'] {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: var(--surface-100);
+  color: var(--ink-700);
+}
+
+.badge--upcoming { background: var(--brand-100); color: var(--brand-900); }
+.badge--ongoing  { background: var(--success-bg); color: var(--success); }
+.badge--past     { background: #eceff1; color: var(--ink-500); }
+
+.chip {
+  display: inline-block;
+  padding: 0.2rem 0.7rem;
+  border-radius: 999px;
+  background: var(--accent-100);
+  color: #8a4a06;
+  font-size: 0.78rem;
+  font-weight: bold;
+}
+
+.price {
+  font-size: 0.85rem;
+  font-weight: bold;
+  color: var(--ink-700);
+}
+.price--free { color: var(--success); }
+.price--closed { color: var(--ink-500); font-weight: normal; }
+
+/* ==========================================================================
+   5. Header, navigation, footer
+   ========================================================================== */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid var(--line);
+}
+
+.site-header__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  max-width: var(--container);
+  margin: 0 auto;
+  padding: var(--space-3) var(--space-5);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--brand-900);
+}
+.brand:hover { text-decoration: none; }
+.brand__mark { display: flex; }
+.brand__text { display: flex; flex-direction: column; line-height: 1.15; }
+.brand__text strong { font-size: 1.05rem; }
+.brand__text small { color: var(--ink-500); font-size: 0.78rem; }
+
+.site-nav__list {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.site-nav__link {
+  display: block;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-sm);
+  color: var(--ink-700);
+  font-weight: bold;
+  font-size: 0.95rem;
+}
+.site-nav__link:hover { background: var(--surface-100); text-decoration: none; }
+.site-nav__link--active { color: var(--brand-700); background: var(--brand-100); }
+
+.site-nav__toggle {
+  display: none;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 0.4rem 0.7rem;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.site-footer {
+  margin-top: var(--space-8);
+  background: var(--brand-900);
+  color: #d9ece8;
+  padding: var(--space-7) 0 var(--space-5);
+}
+
+.site-footer__inner {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-6);
+  max-width: var(--container);
+  margin: 0 auto;
+  padding: 0 var(--space-5);
+}
+
+.site-footer h3 { color: #fff; font-size: 1rem; }
+.site-footer p { color: #b9d8d2; font-size: 0.92rem; }
+.site-footer ul { list-style: none; padding: 0; }
+.site-footer li { margin-bottom: var(--space-2); }
+.site-footer a { color: #d9ece8; }
+.site-footer a:hover { color: #fff; }
+
+.site-footer__bottom {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  justify-content: space-between;
+  align-items: center;
+  max-width: var(--container);
+  margin: var(--space-6) auto 0;
+  padding: var(--space-4) var(--space-5) 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  font-size: 0.85rem;
+}
+.site-footer__bottom p { margin: 0; }
+.site-footer__status { color: #b9d8d2; }
+.site-footer__status.is-online { color: #8fe0b6; }
+.site-footer__status.is-warning { color: #f6cf88; }
+.site-footer__status.is-offline { color: #f3a6a1; }
+
+/* Breadcrumb used on the detail and search pages */
+.breadcrumb {
+  font-size: 0.88rem;
+  color: var(--ink-500);
+  margin: var(--space-5) 0 0;
+}
+.breadcrumb ol { display: flex; gap: var(--space-2); list-style: none; padding: 0; margin: 0; }
+.breadcrumb li + li::before { content: "/"; margin-right: var(--space-2); color: var(--ink-300); }
+
+/* ==========================================================================
+   6. Home page
+   ========================================================================== */
+.hero {
+  background:
+    linear-gradient(120deg, rgba(8, 69, 60, 0.94) 0%, rgba(15, 123, 108, 0.9) 55%, rgba(23, 160, 140, 0.85) 100%);
+  color: #fff;
+  padding: var(--space-8) 0;
+}
+
+.hero__inner {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: var(--space-7);
+  align-items: center;
+  max-width: var(--container);
+  margin: 0 auto;
+  padding: 0 var(--space-5);
+}
+
+.hero h1 { color: #fff; }
+.hero__eyebrow {
+  display: inline-block;
+  padding: 0.25rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  font-size: 0.78rem;
+  font-weight: bold;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: var(--space-4);
+}
+.hero__lead { color: #d8efeb; font-size: 1.1rem; max-width: 56ch; }
+.hero__actions { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-5); }
+
+.hero__panel {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  backdrop-filter: blur(4px);
+}
+.hero__panel h2 { color: #fff; font-size: 1.15rem; }
+.hero__panel ul { list-style: none; padding: 0; margin: 0; }
+.hero__panel li {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+  color: #e4f5f2;
+  font-size: 0.95rem;
+}
+.hero__panel li:last-child { border-bottom: 0; }
+.hero__panel strong { color: #fff; }
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-4);
+}
+.stat {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-sm);
+}
+.stat__value {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: var(--brand-700);
+  line-height: 1.1;
+}
+.stat__label { color: var(--ink-500); font-size: 0.9rem; }
+
+.info-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-sm);
+}
+.info-card h3 { margin-top: 0; }
+.info-card ul { color: var(--ink-700); }
+
+.contact-list { list-style: none; padding: 0; }
+.contact-list li {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: 1px dashed var(--line);
+  font-size: 0.95rem;
+}
+.contact-list li:last-child { border-bottom: 0; }
+.contact-list span:first-child {
+  min-width: 90px;
+  color: var(--ink-500);
+  font-weight: bold;
+}
+
+/* ==========================================================================
+   7. Event card
+   ========================================================================== */
+.event-card {
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+.event-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+.event-card--past { opacity: 0.94; }
+.event-card--past .event-card__media img { filter: grayscale(0.45); }
+
+.event-card__media {
+  position: relative;
+  display: block;
+  background: var(--surface-100);
+}
+.event-card__media img {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+.event-card__media .badge {
+  position: absolute;
+  top: var(--space-3);
+  left: var(--space-3);
+  box-shadow: var(--shadow-sm);
+}
+
+.event-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  flex: 1;
+}
+.event-card__meta { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+.event-card__title { margin: 0; font-size: 1.15rem; }
+.event-card__title a { color: var(--brand-900); }
+.event-card__summary { margin: 0; color: var(--ink-500); font-size: 0.95rem; }
+
+.event-card__details { list-style: none; padding: 0; margin: 0; display: grid; gap: var(--space-2); }
+.event-card__details li { display: grid; grid-template-columns: 62px 1fr; gap: var(--space-2); font-size: 0.9rem; }
+.event-card__label { color: var(--ink-500); font-weight: bold; }
+.event-card__value { color: var(--ink-700); }
+
+.event-card__footer {
+  margin-top: auto;
+  padding-top: var(--space-3);
+  border-top: 1px dashed var(--line);
+  display: grid;
+  gap: var(--space-3);
+}
+
+/* ==========================================================================
+   8. Search page
+   ========================================================================== */
+.page-header {
+  background: var(--brand-100);
+  border-bottom: 1px solid var(--line);
+  padding: var(--space-7) 0 var(--space-6);
+}
+.page-header h1 { margin-bottom: var(--space-2); }
+.page-header p { color: var(--ink-700); max-width: 70ch; margin: 0; }
+
+.search-layout {
+  display: grid;
+  grid-template-columns: 330px 1fr;
+  gap: var(--space-6);
+  align-items: start;
+  padding: var(--space-7) 0;
+}
+
+.filter-panel {
+  position: sticky;
+  top: 96px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-5);
+}
+
+.filter-panel h2 { font-size: 1.1rem; margin-bottom: var(--space-2); }
+.filter-panel__hint { color: var(--ink-500); font-size: 0.86rem; }
+
+fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0 0 var(--space-5);
+}
+fieldset:last-of-type { margin-bottom: var(--space-4); }
+
+legend,
+.field > label,
+.field-label {
+  display: block;
+  font-weight: bold;
+  font-size: 0.9rem;
+  color: var(--ink-900);
+  margin-bottom: var(--space-2);
+  padding: 0;
+}
+
+.field { margin-bottom: var(--space-4); }
+.field__hint { color: var(--ink-500); font-size: 0.8rem; margin: var(--space-1) 0 0; }
+
+/*
+ * The format line shown above a native date field.
+ *
+ * A native <input type="date"> paints its own placeholder in the language of
+ * the operating system, and that text cannot be changed from HTML, CSS or
+ * JavaScript (verified: lang on the input, on an ancestor and dir="ltr" all
+ * have no effect in Chromium). On a Chinese Windows it reads 年/月/日. Rather
+ * than replace the native control - which would lose the built-in picker and
+ * validation - the accepted format is stated here in English, which is the
+ * usual solution and works in every browser.
+ */
+.field__format {
+  margin: 0 0 var(--space-2);
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  color: var(--brand-700);
+  font-weight: bold;
+}
+
+input[type='text'],
+input[type='search'],
+input[type='date'],
+input[type='number'],
+input[type='email'],
+select,
+textarea {
+  width: 100%;
+  /* Form controls have a browser-defined intrinsic minimum width (a date input
+     is roughly 130px). Without min-width:0 a grid or flex parent refuses to
+     shrink below it and the control overflows its container, which is what
+     happened to the From/To date fields in the narrow filter panel. */
+  min-width: 0;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: #fff;
+}
+input:focus,
+select:focus,
+textarea:focus { border-color: var(--brand-500); }
+
+.checkbox-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-1);
+  max-height: 230px;
+  overflow-y: auto;
+  padding: var(--space-1);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-50);
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 0.35rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.checkbox:hover { background: var(--brand-100); }
+.checkbox input { width: auto; margin: 0; }
+.checkbox__count { margin-left: auto; color: var(--ink-500); font-size: 0.8rem; }
+
+.radio-row { display: flex; flex-wrap: wrap; gap: var(--space-4); }
+.radio-row .checkbox { background: transparent; padding-left: 0; }
+
+.field-message { display: block; margin-top: var(--space-2); font-size: 0.85rem; min-height: 1.1rem; }
+.field-message--error { color: var(--danger); }
+.field-message--info { color: var(--ink-500); }
+.field-message--success { color: var(--success); }
+
+.filter-actions { display: grid; gap: var(--space-2); }
+
+.chip-list { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-4); }
+.chip-list__label { font-size: 0.85rem; color: var(--ink-500); align-self: center; }
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0.25rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  font-size: 0.82rem;
+  color: var(--ink-700);
+  cursor: pointer;
+}
+.filter-chip:hover { border-color: var(--brand-500); color: var(--brand-900); }
+.filter-chip span[aria-hidden='true'] { color: var(--danger); font-weight: bold; }
+
+.results-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: var(--space-4);
+}
+.results-head h2 { margin: 0; font-size: 1.25rem; }
+.results-count { color: var(--ink-500); font-size: 0.9rem; }
+
+.sort-control { display: flex; align-items: center; gap: var(--space-2); font-size: 0.88rem; }
+.sort-control select { width: auto; padding: 0.4rem 0.6rem; }
+
+/* ==========================================================================
+   9. Event detail page
+   ========================================================================== */
+.event-hero {
+  background: #fff;
+  border-bottom: 1px solid var(--line);
+  padding: var(--space-6) 0 var(--space-7);
+}
+.event-hero__grid {
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: var(--space-7);
+  align-items: center;
+}
+.event-hero__meta { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; margin-bottom: var(--space-3); }
+.event-hero h1 { margin-bottom: var(--space-4); }
+.event-hero__lead { font-size: 1.08rem; color: var(--ink-700); }
+.event-hero__media {
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--line);
+}
+.event-hero__media img { aspect-ratio: 16 / 10; object-fit: cover; width: 100%; }
+
+.fact-list { list-style: none; padding: 0; margin: 0 0 var(--space-5); display: grid; gap: var(--space-3); }
+.fact-list li { display: grid; grid-template-columns: 130px 1fr; gap: var(--space-3); font-size: 0.95rem; }
+.fact-list dt, .fact-list__label { color: var(--ink-500); font-weight: bold; }
+.fact-list__value { color: var(--ink-900); }
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: var(--space-7);
+  align-items: start;
+  padding: var(--space-7) 0;
+}
+
+.prose h2 { margin-top: var(--space-6); }
+.prose h2:first-child { margin-top: 0; }
+.prose p { color: var(--ink-700); }
+
+.side-column { display: grid; gap: var(--space-5); position: sticky; top: 96px; }
+
+.panel {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-5);
+}
+.panel h2, .panel h3 { margin-top: 0; font-size: 1.1rem; }
+.panel--accent { border-top: 4px solid var(--accent-500); }
+.panel--brand { border-top: 4px solid var(--brand-700); }
+
+.progress__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 0.85rem;
+  color: var(--ink-500);
+  margin-bottom: var(--space-2);
+}
+.progress__percent { font-weight: bold; color: var(--brand-700); }
+.progress__track {
+  height: 12px;
+  border-radius: 999px;
+  background: var(--surface-100);
+  overflow: hidden;
+}
+.progress__fill {
+  height: 100%;
+  width: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--brand-500), var(--accent-500));
+  transition: width 0.8s ease;
+}
+.progress__amounts { margin: var(--space-3) 0 0; font-size: 0.9rem; color: var(--ink-700); }
+.progress__amounts strong { color: var(--brand-900); font-size: 1.05rem; }
+.progress__meta { margin: var(--space-1) 0 0; font-size: 0.8rem; color: var(--ink-500); }
+.progress--compact .progress__header { font-size: 0.78rem; }
+.progress--compact .progress__track { height: 8px; }
+.progress--compact .progress__amounts { font-size: 0.82rem; }
+
+.ticket-list { list-style: none; padding: 0; margin: 0 0 var(--space-4); display: grid; gap: var(--space-3); }
+.ticket {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-50);
+}
+.ticket__name { font-weight: bold; }
+.ticket__desc { display: block; color: var(--ink-500); font-size: 0.84rem; font-weight: normal; }
+.ticket__price { font-weight: bold; color: var(--brand-900); white-space: nowrap; }
+.ticket--free { border-color: var(--brand-500); background: var(--brand-100); }
+.ticket__availability { display: block; font-size: 0.78rem; color: var(--ink-500); font-weight: normal; }
+
+.register-note { color: var(--ink-500); font-size: 0.84rem; margin: var(--space-3) 0 0; }
+
+.registration-form { margin-top: var(--space-5); border-top: 1px dashed var(--line); padding-top: var(--space-5); }
+.registration-form h3 { margin-bottom: var(--space-2); }
+/*
+ * Two side-by-side fields (the From/To date pair on the search page and the
+ * name/email pair on the registration form).
+ *
+ * auto-fit + minmax(160px, 1fr) rather than 1fr 1fr, for two reasons:
+ *   * a bare 1fr refuses to shrink below the content's intrinsic minimum width,
+ *     and a date input is about 130px wide, so in the 330px filter panel the
+ *     two date fields pushed past the panel border (the reported bug);
+ *   * auto-fit collapses the pair to a single column automatically when the
+ *     container is too narrow, so no media query is needed for this rule.
+ * The controls themselves also carry min-width: 0, which is what actually
+ * allows the tracks to shrink.
+ */
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--space-3);
+}
+
+/* ==========================================================================
+   10. Modal
+   ========================================================================== */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+}
+.modal[hidden] { display: none; }
+
+dialog.modal--native {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  max-width: 560px;
+  width: 100%;
+}
+dialog.modal--native::backdrop { background: rgba(8, 34, 30, 0.55); }
+
+.modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(8, 34, 30, 0.55);
+}
+
+.modal__panel {
+  position: relative;
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.modal__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-5) var(--space-5) var(--space-3);
+  border-bottom: 1px solid var(--line);
+}
+.modal__title { margin: 0; font-size: 1.2rem; }
+.modal__close {
+  border: 0;
+  background: transparent;
+  font-size: 1.6rem;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--ink-500);
+  padding: 0 var(--space-2);
+}
+.modal__close:hover { color: var(--danger); }
+.modal__body { padding: var(--space-5); }
+.modal__body p { color: var(--ink-700); }
+.modal__lead { font-size: 1.05rem; font-weight: bold; color: var(--brand-900); }
+.modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-5) var(--space-5);
+}
+body.modal-open { overflow: hidden; }
+
+/* ==========================================================================
+   11. Loading / empty / error states
+   ========================================================================== */
+.state {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: var(--space-7) var(--space-5);
+  background: #fff;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+}
+.state h3 { margin-bottom: var(--space-2); }
+.state p { color: var(--ink-500); margin: 0; }
+.state--error { border-color: #f0c3bf; background: var(--danger-bg); }
+.state--error h3 { color: var(--danger); }
+.state--error p { color: #7c2d28; }
+.state__details { text-align: left; max-width: 520px; margin: var(--space-3) auto 0; color: #7c2d28; }
+
+.spinner {
+  width: 34px;
+  height: 34px;
+  margin: 0 auto var(--space-3);
+  border: 3px solid var(--surface-100);
+  border-top-color: var(--brand-700);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner { animation-duration: 2s; }
+  .event-card, .button, .progress__fill { transition: none; }
+  html { scroll-behavior: auto; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--surface-100) 25%, #f8fbfa 50%, var(--surface-100) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: var(--radius-sm);
+  min-height: 1rem;
+}
+@keyframes shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+/* ==========================================================================
+   12. Responsive rules
+   ========================================================================== */
+@media (max-width: 1000px) {
+  .search-layout { grid-template-columns: 1fr; }
+  .filter-panel { position: static; }
+  .detail-grid { grid-template-columns: 1fr; gap: var(--space-6); }
+  .side-column { position: static; }
+  .hero__inner { grid-template-columns: 1fr; }
+  .event-hero__grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 760px) {
+  body { font-size: 16px; }
+  .section { padding: var(--space-7) 0; }
+  .site-nav__toggle { display: block; }
+  .site-nav {
+    display: none;
+    width: 100%;
+    order: 3;
+    padding-bottom: var(--space-3);
+  }
+  .site-nav--open { display: block; }
+  .site-nav__list { flex-direction: column; align-items: stretch; gap: var(--space-1); }
+  .site-nav__link { padding: 0.6rem 0.75rem; }
+  .site-header__inner { flex-wrap: wrap; }
+  .form-row { grid-template-columns: 1fr; }
+  .fact-list li { grid-template-columns: 1fr; gap: var(--space-1); }
+  .site-footer__bottom { flex-direction: column; align-items: flex-start; }
+}
+
+@media (max-width: 520px) {
+  .container, .site-header__inner, .hero__inner, .site-footer__inner { padding-inline: var(--space-4); }
+  .event-card__details li { grid-template-columns: 1fr; }
+  .brand__text small { display: none; }
+}
+
+@media print {
+  .site-header, .site-footer, .filter-panel, .button { display: none !important; }
+  body { background: #fff; }
+  .event-card, .panel { box-shadow: none; border-color: #999; }
+}
