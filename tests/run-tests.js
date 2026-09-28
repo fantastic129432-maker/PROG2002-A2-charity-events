@@ -1214,6 +1214,49 @@ async function testClient() {
     );
   });
 
+  await test('a closed dialog is hidden instead of left on screen', async () => {
+    const css = fs.readFileSync(path.join(CLIENT_DIR, 'css', 'styles.css'), 'utf8');
+
+    // Regression guard for a defect reported from a real browser: pressing
+    // Register opened the dialog, and dismissing it did nothing visible. The
+    // dialog was in fact closing - the `open` attribute and the `open`
+    // property both went false - but .modal sets `display: flex`, and an author
+    // rule beats the browser's own `dialog:not([open]) { display: none }`, so
+    // the closed dialog kept its box and stayed painted.
+    //
+    // jsdom performs no layout and applies no user-agent stylesheet for
+    // <dialog>, so no DOM test here can ever see this. It is therefore asserted
+    // against the stylesheet, the same way the dark-theme trap is.
+    const modalRule = css.match(/(?:^|[}\s])\.modal\s*\{([^}]*)\}/);
+    assert.ok(modalRule, 'styles.css has no .modal rule');
+    assert.match(
+      modalRule[1].replace(/\s+/g, ' '),
+      /display:\s*flex/,
+      '.modal is expected to lay its panel out with flex'
+    );
+
+    // The hiding rule has to be at least as specific as `.modal`. Sharing the
+    // modal--native class and adding :not([open]) gives it (0,2,1) against
+    // .modal's (0,1,0), so it wins.
+    const closedRule = css.match(/([^{}]*\.modal--native[^{}]*:not\(\[open\]\)[^{}]*)\{([^}]*)\}/);
+    assert.ok(
+      closedRule,
+      'styles.css must hide a closed native dialog. Without a rule at least as ' +
+        'specific as .modal, dialog.close() removes the open attribute but the ' +
+        'element stays on screen and dismissing the dialog looks broken'
+    );
+    assert.match(
+      closedRule[1],
+      /dialog/,
+      'the closed-dialog rule should be scoped to the dialog element'
+    );
+    assert.match(
+      closedRule[2].replace(/\s+/g, ' '),
+      /display:\s*none/,
+      'the closed-dialog rule must set display: none'
+    );
+  });
+
   await test('date fields state their format in English', async () => {
     const html = fs.readFileSync(path.join(CLIENT_DIR, 'search.html'), 'utf8');
     const css = fs.readFileSync(path.join(CLIENT_DIR, 'css', 'styles.css'), 'utf8');

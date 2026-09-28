@@ -1234,6 +1234,13 @@ dialog.modal--native {
   max-width: 560px;
   width: 100%;
 }
+/* A closed <dialog> is hidden by the browser's own stylesheet, but the
+   `display: flex` on .modal above is an author rule and author rules win, so a
+   dialog that has been closed stays painted on screen. That is why dismissing
+   the Register dialog appeared to do nothing: the element really did close, it
+   simply never stopped being displayed. This restores the hiding. It has to be
+   at least as specific as .modal, which the element selector plus :not() gives. */
+dialog.modal--native:not([open]) { display: none; }
 dialog.modal--native::backdrop { background: rgba(8, 34, 30, 0.55); }
 
 .modal__backdrop {

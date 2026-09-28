@@ -82,7 +82,7 @@ not actually verified.
 
 ## D. Automated tests
 
-- [ ] `node tests/run-tests.js` prints `60 passed, 0 failed`
+- [ ] `node tests/run-tests.js` prints `61 passed, 0 failed`
 - [ ] You have run the suite **after** your last code change
 
 ## E. Documentation and deliverables
