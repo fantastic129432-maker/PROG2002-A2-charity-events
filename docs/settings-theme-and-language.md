@@ -146,7 +146,7 @@ so it does not glare against a dark card.
 ### Automated
 
 ```bash
-node tests/run-tests.js            # 63 checks, including six for the settings
+node tests/run-tests.js            # 64 checks, including six for the settings
 node tools/check-translations.mjs  # dictionary completeness
 node tools/sync-theme-snippet.mjs --check
 node tools/check-contrast.mjs      # contrast in both themes

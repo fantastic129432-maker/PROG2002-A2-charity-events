@@ -514,9 +514,13 @@ function buildOrganiserPanel(event) {
   list.append(city);
   panel.append(list);
   panel.append(
-    el('p', {
+    // An anchor, not a paragraph. This was built with el('p', ...) carrying an
+    // href and the .button classes, so it looked exactly like a button and did
+    // nothing at all when clicked: a paragraph has no href behaviour.
+    el('a', {
+      className: 'button button--small button--outline',
       text: t('event.moreEvents'),
-      attributes: { href: 'search.html', class: 'button button--small button--outline' },
+      attributes: { href: 'search.html' },
     })
   );
   return panel;

@@ -720,6 +720,43 @@ async function testClient() {
     }
   });
 
+  await test('every element styled as a button can actually be clicked', async () => {
+    // Regression guard for a defect reported from the browser: the event page's
+    // "Find more events" control was built with el('p', { attributes: { href,
+    // class: 'button ...' } }). A paragraph has no href behaviour, so it looked
+    // exactly like a button and did nothing at all when clicked.
+    //
+    // The button styling must only ever sit on something that can receive a
+    // click: an <a> with an href, a <button>, or a submit/button input.
+    const pages = [
+      ['index.html', 'http://localhost:5500/index.html', '.event-card'],
+      ['search.html', 'http://localhost:5500/search.html', '#search-button'],
+      ['event.html', 'http://localhost:5500/event.html?id=4', '.event-hero'],
+    ];
+
+    for (const [file, url, ready] of pages) {
+      const { window } = await loadPage({ JSDOM }, file, { url, apiHandler });
+      const rendered = await waitFor(() => window.document.querySelector(ready) !== null);
+      assert.ok(rendered, `${file} did not finish rendering`);
+
+      const dead = [...window.document.querySelectorAll('.button, [class*="button--"]')]
+        .filter((node) => {
+          const tag = node.tagName.toLowerCase();
+          if (tag === 'a') return !node.hasAttribute('href');
+          if (tag === 'button') return false;
+          if (tag === 'input') return !/^(submit|button)$/.test(node.type);
+          return true;
+        })
+        .map((node) => `<${node.tagName.toLowerCase()}> "${node.textContent.trim().slice(0, 30)}"`);
+
+      assert.deepEqual(
+        dead,
+        [],
+        `${file} has controls that look like buttons but cannot be clicked: ${dead.join(', ')}`
+      );
+    }
+  });
+
   await test('home page shows no past or suspended event', async () => {
     const { window } = await loadPage({ JSDOM }, 'index.html', {
       url: 'http://localhost:5500/index.html',
