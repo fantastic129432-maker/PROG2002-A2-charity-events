@@ -1,7 +1,13 @@
 # Submission checklist
 
 PROG2002 Web Development II - Assessment 2
-**Due:** 28 September 2026, 11:59 pm AEST/AEDT (Monday of Week 5) - **40%**
+**Due:** 5 October 2026, 11:59 pm AEDT - **40%**
+
+> The Unit Assessor posted two corrections on 28 September 2026 that change the
+> rules for this assessment. Read section **H** at the end of this file before
+> submitting: the deadline moved from 28 September to 5 October, the report
+> template was replaced, no CSS or JavaScript framework is permitted, and AI use
+> now requires the official prompt plus screenshots of your chat log.
 
 Work through this list top to bottom before you submit. Tick nothing you have
 not actually verified.
@@ -180,3 +186,87 @@ foreach ($z in @("usernameA2-api.zip", "usernameA2-clientside.zip")) {
   $a.Dispose()
 }
 ```
+
+---
+
+## H. Unit Assessor update, 28 September 2026
+
+Two announcements changed the rules after this project was built. This section
+records each one and exactly where the project stands.
+
+### H1. The deadline moved
+
+From **28 September** to **5 October 2026, 11:59 pm**. One extra week.
+
+### H2. No CSS or JavaScript framework (this project complies)
+
+> "You are NOT allowed to use any frameworks for CSS or Javascript. You may use
+> the Express framework to build the server side script, that's all. Do not use
+> any Templating provided by Express... Your webpages must be delivered using
+> only HTML, CSS and JS."
+
+Verified against the code, not assumed:
+
+- [x] The API's only runtime dependencies are **`express`** and **`mysql2`**
+      (a database driver, not a framework). The unused `cors` package was
+      removed, because CORS headers are written by hand in
+      `api/src/middleware/security.js`
+- [x] No template engine anywhere: no `view engine`, no `res.render`, no EJS,
+      Pug, Handlebars or Nunjucks. The API's one HTML page is served as a plain
+      file with `res.sendFile()`
+- [x] The client uses no framework and no library - no React, Vue, Angular,
+      Svelte, jQuery, Bootstrap, Tailwind or Alpine
+- [x] No CDN: every script, stylesheet and image is a local file. The three
+      pages load one inline theme snippet and one ES module each
+- [x] `jsdom` appears only in the root `package.json` as a **dev** dependency
+      for the test suite. It is not part of the website and is not shipped in
+      either zip
+
+### H3. The report template was replaced
+
+An updated **PROG2002 A2 Report Template** is on SIE Moodle, together with an
+**AI-Assignment-Prompt** file.
+
+- [ ] **Download both from Moodle and check the report against the new
+      template.** This report was written against the previous template, so its
+      section headings and question order may no longer match. Nobody but you
+      can download these files - they need your Moodle login
+
+### H4. AI use now needs evidence
+
+> "If you use AI in any capacity, please use the AI Prompt as provided... Please
+> also include screenshots of your AI chat log with your report to show that you
+> only asked AI questions to further your understanding and NOT to use AI to
+> generate the code for you. Failure to provide the appropriate evidence will
+> result in a loss of marks."
+
+- [ ] **This is unresolved and it is the most serious item on this list.**
+      The code, the report and the translations in this project were generated
+      with an AI assistant, at the owner's request. That is generation, not
+      question-asking, so an honest chat log cannot show what the Unit Assessor
+      asks to see. Screenshots must not be manufactured to imply otherwise.
+
+The only defensible routes from here:
+
+1. **Rebuild the code yourself** and use AI only to ask questions. The one-week
+   extension exists for exactly this kind of correction. Keep the real chat log,
+   starting from the official prompt.
+2. **Disclose the true extent of the AI use**, in the declaration and to the
+   Unit Assessor, and be ready to explain every line. `docs/genai-declaration.md`
+   gives the wording for the disclosure option.
+
+What is *not* an option: submitting a chat log that shows only question-asking
+when the log in fact contains the generation. That is the specific thing the
+warning is about.
+
+### H5. What the project can still do legitimately
+
+Using AI to **understand** code is permitted and produces a genuine, submittable
+log. That is the useful work available right now:
+
+- walk through each file and explain what it does and why
+- quiz yourself on a random function until you can explain it unaided
+- ask why one approach was chosen over another, and what would break otherwise
+
+The rule from `docs/genai-declaration.md` still stands on its own: if you cannot
+explain a line, you cannot submit it.
