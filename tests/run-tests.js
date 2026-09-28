@@ -679,6 +679,47 @@ async function testClient() {
     assert.ok(firstCard.querySelector('img'), 'the event image is missing');
   });
 
+  await test('the card vocabulary comes from the dictionary, not English literals', async () => {
+    // Regression guard for a defect found in a browser: dom.js built the card
+    // labels and the card button from English literals, so the vocabulary
+    // existed in all four dictionaries and was simply never used. A Japanese
+    // visitor saw a Japanese badge above cards still reading "When / Where /
+    // Cause" and a "View details" button.
+    //
+    // This is asserted against the source rather than through a loaded page
+    // because the DOM harness caches modules between page loads: switching the
+    // language there updates <html lang> but does not rebuild the cards, so a
+    // rendered assertion would fail whether or not the code is correct. The
+    // behaviour itself was confirmed in a real browser, in all four languages.
+    const dom = fs.readFileSync(path.join(CLIENT_DIR, 'js', 'dom.js'), 'utf8');
+
+    const banned = [
+      ["'When'", 'card.when'],
+      ["'Where'", 'card.where'],
+      ["'Cause'", 'card.cause'],
+      ["'View details'", 'common.viewDetails'],
+    ];
+    for (const [literal, key] of banned) {
+      assert.ok(
+        !dom.includes(literal),
+        `dom.js still hardcodes ${literal}; it must use t('${key}') so the label translates`
+      );
+    }
+
+    for (const key of [
+      'card.when',
+      'card.where',
+      'card.cause',
+      'common.viewDetails',
+      'a11y.viewDetailsFor',
+    ]) {
+      assert.ok(
+        dom.includes(`t('${key}'`),
+        `dom.js does not use the ${key} key, so that vocabulary is dead`
+      );
+    }
+  });
+
   await test('home page shows no past or suspended event', async () => {
     const { window } = await loadPage({ JSDOM }, 'index.html', {
       url: 'http://localhost:5500/index.html',
@@ -1254,6 +1295,62 @@ async function testClient() {
       closedRule[2].replace(/\s+/g, ' '),
       /display:\s*none/,
       'the closed-dialog rule must set display: none'
+    );
+  });
+
+  await test('the sticky filter panel cannot grow taller than the window', async () => {
+    const css = fs.readFileSync(path.join(CLIENT_DIR, 'css', 'styles.css'), 'utf8');
+
+    // Regression guard for a defect found in a real browser. The filter panel is
+    // sticky and taller than a laptop window, so its bottom - which holds the
+    // Search button - was pinned below the fold: measured from scrollY 500 to
+    // 2200 the button's viewport position never changed, and the only way to run
+    // a second search was to scroll to the very bottom of the page. Capping the
+    // height to the window is what fixes it.
+    //
+    // jsdom applies no layout, so this cannot be a DOM test. It is asserted
+    // against the stylesheet, like the dark-theme and closed-dialog guards.
+    const panel = css.match(/\.filter-panel\s*\{([^}]*)\}/);
+    assert.ok(panel, 'styles.css has no .filter-panel rule');
+    const body = panel[1].replace(/\s+/g, ' ');
+    assert.match(body, /position:\s*sticky/, 'the filter panel is expected to be sticky');
+    assert.match(
+      body,
+      /max-height:\s*calc\(100(?:d)?vh\s*-/,
+      'a sticky panel taller than the window pins its own bottom out of reach, ' +
+        'so it needs a max-height tied to the viewport'
+    );
+    assert.match(
+      body,
+      /overflow-y:\s*auto/,
+      'once the height is capped the panel has to scroll internally'
+    );
+
+    // The action row must stay on screen while the fields scroll behind it.
+    const actions = css.match(/\.filter-panel\s+\.filter-actions\s*\{([^}]*)\}/);
+    assert.ok(
+      actions,
+      'the filter actions are not pinned; the Search button would scroll out of the panel'
+    );
+    assert.match(
+      actions[1].replace(/\s+/g, ' '),
+      /position:\s*sticky/,
+      'the Search button must remain visible while the filters scroll'
+    );
+
+    // The stacked layout is not sticky, so it must undo the cap and the scroll.
+    const stacked = /@media[^{]*max-width:\s*1000px[^{]*\{([\s\S]*?)\n\}/.exec(css);
+    assert.ok(stacked, 'the 1000px breakpoint was not found in styles.css');
+    const stackedBody = stacked[1].replace(/\s+/g, ' ');
+    assert.match(
+      stackedBody,
+      /\.filter-panel\s*\{[^}]*position:\s*static/,
+      'when the layout stacks, the filter panel must stop being sticky'
+    );
+    assert.match(
+      stackedBody,
+      /\.filter-panel\s*\{[^}]*max-height:\s*none/,
+      'a stacked panel must not cap its own height, or the page would scroll twice'
     );
   });
 

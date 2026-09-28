@@ -61,11 +61,11 @@ Then open **http://localhost:5500/index.html**.
 ### Verify everything at once
 
 ```bash
-node tests/run-tests.js                     # 61 checks using the offline data source
-set TEST_DATA_SOURCE=mysql && node tests/run-tests.js   # the same 61 checks against MySQL
+node tests/run-tests.js                     # 63 checks using the offline data source
+set TEST_DATA_SOURCE=mysql && node tests/run-tests.js   # the same 63 checks against MySQL
 ```
 
-The suite starts its own API instance, then runs **61 checks**: every endpoint,
+The suite starts its own API instance, then runs **63 checks**: every endpoint,
 every search filter, validation and error handling, plus DOM tests that load
 the real HTML pages and confirm the data actually reaches the page (event
 cards, progress bar, ticket prices, filter checkboxes, Clear Filters and the

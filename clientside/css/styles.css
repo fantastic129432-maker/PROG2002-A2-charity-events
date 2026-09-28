@@ -944,6 +944,18 @@ textarea {
 .filter-panel {
   position: sticky;
   top: 96px;
+  /* A sticky panel that is taller than the window pins its own bottom below the
+     fold. The Search button lives at that bottom, so on a laptop it could not
+     be scrolled into reach at all: from scrollY 500 to 2200 its viewport
+     position never changed, and the only way to run a second search was to
+     scroll to the very bottom of the page. Capping the panel to the window and
+     letting it scroll internally keeps it sticky and keeps every control
+     reachable. dvh is used where it is supported so mobile browser chrome
+     cannot reintroduce the problem. */
+  max-height: calc(100vh - 96px - var(--space-5));
+  max-height: calc(100dvh - 96px - var(--space-5));
+  overflow-y: auto;
+  overscroll-behavior: contain;
   background: #fff;
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -1052,6 +1064,22 @@ textarea:focus { border-color: var(--brand-500); }
 .field-message--success { color: var(--success); }
 
 .filter-actions { display: grid; gap: var(--space-2); }
+
+/* The panel scrolls internally on short windows, so pin the action row to the
+   bottom of it. Without this the Search button sits below the panel's own fold
+   and the visitor has to work out that the panel scrolls. The opaque background
+   stops the fields showing through as they pass behind it, and the hard shadow
+   paints the same colour over the panel's bottom padding so nothing peeks out
+   under the buttons. The panel's own overflow clips that shadow, so it cannot
+   spill outside the border. */
+.filter-panel .filter-actions {
+  position: sticky;
+  bottom: 0;
+  background: var(--surface-0);
+  padding-top: var(--space-3);
+  padding-bottom: var(--space-1);
+  box-shadow: 0 var(--space-5) 0 var(--surface-0);
+}
 
 .chip-list { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-4); }
 .chip-list__label { font-size: 0.85rem; color: var(--ink-500); align-self: center; }
@@ -1347,7 +1375,9 @@ body.modal-open { overflow: hidden; }
    ========================================================================== */
 @media (max-width: 1000px) {
   .search-layout { grid-template-columns: 1fr; }
-  .filter-panel { position: static; }
+  /* Stacked layout: the panel is no longer sticky, so it must not cap its own
+     height or scroll internally - the whole page scrolls instead. */
+  .filter-panel { position: static; max-height: none; overflow: visible; }
   .detail-grid { grid-template-columns: 1fr; gap: var(--space-6); }
   .side-column { position: static; }
   .hero__inner { grid-template-columns: 1fr; }

@@ -295,9 +295,12 @@ export function eventCard(event) {
 
   const details = el('ul', { className: 'event-card__details' });
   [
-    ['When', `${formatDateRange(event)}${event.startTime ? `, ${formatTime(event.startTime)}` : ''}`],
-    ['Where', `${event.venueName}, ${event.city} ${event.state || ''}`.trim()],
-    ['Cause', event.organizationName],
+    [
+      t('card.when'),
+      `${formatDateRange(event)}${event.startTime ? `, ${formatTime(event.startTime)}` : ''}`,
+    ],
+    [t('card.where'), `${event.venueName}, ${event.city} ${event.state || ''}`.trim()],
+    [t('card.cause'), event.organizationName],
   ].forEach(([label, value]) => {
     const item = el('li');
     item.append(
@@ -313,10 +316,10 @@ export function eventCard(event) {
     (() => {
       const cta = el('a', {
         className: 'button button--small',
-        text: 'View details',
+        text: t('common.viewDetails'),
         attributes: {
           href: `event.html?id=${encodeURIComponent(event.eventId)}`,
-          'aria-label': `View full details for ${event.eventName}`,
+          'aria-label': t('a11y.viewDetailsFor', { name: event.eventName }),
         },
       });
       return cta;
@@ -364,7 +367,10 @@ export function showEmpty(container, title, hint) {
  */
 export function showError(container, message, details) {
   const wrapper = el('div', { className: 'state state--error', attributes: { role: 'alert' } });
-  wrapper.append(el('h3', { text: 'Something went wrong' }), el('p', { text: message }));
+  // t('error.title') rather than a literal: the key exists in all four
+  // dictionaries and was simply never used, so the heading stayed English in
+  // every language while the rest of the interface switched.
+  wrapper.append(el('h3', { text: t('error.title') }), el('p', { text: message }));
 
   if (Array.isArray(details) && details.length > 0) {
     const list = el('ul', { className: 'state__details' });
