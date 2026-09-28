@@ -526,7 +526,13 @@ async function evaluateModule(shortName, registry, moduleCache) {
     console,
     setTimeout,
     clearTimeout,
-    fetch: globalThis.fetch,
+    // The page must talk to the in-process test API, never the network.
+    // loadPage() installs that stub on the jsdom window, so delegate to it.
+    // Handing the modules Node's own fetch() instead would send every page
+    // request to the real URL in config.js, which made these tests depend on
+    // a separate API happening to run on port 3000: they passed with it up
+    // and failed with it down, while testing neither deliberately.
+    fetch: (input, init) => globalThis.__jsdomWindow.fetch(input, init),
     AbortController,
     URLSearchParams,
     Intl,
