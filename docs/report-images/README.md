@@ -74,8 +74,8 @@ the Question 1 shot list.
 
 The pages must be running first:
 
-```powershell
-.\start-all.cmd
+```bash
+node tools/start-all.mjs
 ```
 
 Then re-run the capture with the site in light theme. The capture script is not

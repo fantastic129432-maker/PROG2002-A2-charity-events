@@ -221,6 +221,15 @@ Verified against the code, not assumed:
 - [x] `jsdom` appears only in the root `package.json` as a **dev** dependency
       for the test suite. It is not part of the website and is not shipped in
       either zip
+- [x] **The repository contains no PowerShell and no batch files.** The setup
+      scripts were `.ps1` and `.cmd`, which made GitHub's language bar report
+      "PowerShell 4.6%" and "Batchfile 0.9%" - not a breach of the rule above,
+      which is about the webpages, but easy for a marker to misread. They are
+      now JavaScript: `tools/start-all.mjs` replaces `start-all.cmd`, and
+      `tools/load-database.mjs` replaces `load-database.ps1`. The installer
+      scripts were deleted outright, because MySQL 8.4.11 is already installed
+      and they had no further use. The language bar now shows JavaScript, CSS,
+      HTML, SQL and JSON only. Nothing in the running application changed
 
 ### H3. The report template was replaced
 

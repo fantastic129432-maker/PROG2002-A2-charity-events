@@ -19,15 +19,16 @@ You need **Node.js 18 or newer**. MySQL is used for the submitted
 configuration; the API can also run without MySQL so the site can be marked
 anywhere (see step 4).
 
-### The easy way (Windows)
+### The easy way
 
-```bat
-start-all.cmd
+```bash
+node tools/start-all.mjs
 ```
 
-That opens three windows - MySQL, the API and the website - and then opens
-<http://localhost:5500/index.html> for you. Close the three windows to stop
-everything.
+That checks MySQL, starts the API and the website, and opens
+<http://localhost:5500/index.html> for you. Both servers run in that one
+terminal with their output prefixed `[api]` and `[web]`, so **Ctrl+C stops
+both**. Add `--no-browser` if you would rather open the page yourself.
 
 ### The step-by-step way
 
@@ -92,7 +93,7 @@ Two database accounts are used:
 
 | Account | Privileges | Used by |
 | --- | --- | --- |
-| `root` | full | `tools\load-database.ps1` when (re)creating the database |
+| `root` | full | `tools/load-database.mjs` when (re)creating the database |
 | `charity_app` | `SELECT` on `charityevents_db` only | the API, through `api\.env` |
 
 The API account is deliberately read-only, because Assessment 2 only reads.
@@ -102,32 +103,38 @@ mentioning in the video as a security decision.
 The real password lives only in `api\.env`, which is git-ignored and excluded
 from the submission zips; `api\.env.example` carries a placeholder instead.
 
-Because MySQL is a Windows service, `start-all.cmd` checks whether port 3306
-answers before doing anything, so it never tries to start a second server. The
-service starts with Windows, so in practice you normally only need:
+MySQL runs as the Windows service **MySQL84**, which starts with Windows, so in
+practice you normally only need one command:
 
-```bat
-start-all.cmd          :: API + website (MySQL is already running)
+```bash
+node tools/start-all.mjs      # API + website (MySQL is already running)
 ```
 
-Reloading the database with root after changing `database\02_seed.sql`:
+`start-all.mjs` checks whether port 3306 answers before doing anything, so it
+never tries to start a second server.
 
-```powershell
-powershell -ExecutionPolicy Bypass -File tools\load-database.ps1 -User root -Password "your_root_password"
+Reloading the database after changing `database/02_seed.sql`. It needs an
+account that can drop and recreate the database, so pass `root` - the
+`charity_app` account in `api/.env` is read-only and the script will say so:
+
+```bash
+node tools/load-database.mjs --user root --password "your_root_password"
 ```
 
-### If you install a different MySQL instead
+Put the password in `DB_PASSWORD` instead of the command line if you would
+rather it did not appear in the process list:
 
-`tools\find-mysql.ps1` is used by every script and searches, in order:
-`-MySQLHome`, `%MYSQL_HOME%`, `Program Files\MySQL\MySQL Server *`,
-`%USERPROFILE%\mysql`, `<project>\mysql`, then `mysqld.exe` on `PATH`. A
-per-user installation therefore keeps working without editing anything:
-
-```powershell
-node tools\download-mysql-parallel.mjs
-powershell -ExecutionPolicy Bypass -File tools\install-mysql.ps1 -AddToPath
-powershell -ExecutionPolicy Bypass -File tools\load-database.ps1 -User root
+```bash
+set DB_PASSWORD=your_root_password && node tools/load-database.mjs --user root
 ```
+
+### Finding MySQL
+
+`tools/load-database.mjs` and `tools/start-all.mjs` both locate the server in
+the same order: `--mysql-home`, `%MYSQL_HOME%`,
+`Program Files\MySQL\MySQL Server *` (newest version first),
+`%USERPROFILE%\mysql`, then `<project>\mysql`. A MySQL installed somewhere else
+therefore keeps working without editing any file.
 
 ---
 
@@ -169,23 +176,20 @@ charity-events-a2/
 │  └─ images/*.svg              offline artwork (no external requests)
 ├─ tests/run-tests.js           automated checks for the whole submission
 ├─ tools/                       see the table below
-├─ start-all.cmd                starts MySQL + API + website in three windows
 └─ docs/                        report, API docs, ERD, video script
 ```
 
 ### What is in `tools/`
 
 Nothing in the running application imports anything here; these are the setup
-scripts and the checks. Each earns its place:
+scripts and the checks. Every one is JavaScript, so the whole project - server,
+client and tooling - runs on Node with no second language to install. Each
+earns its place:
 
 | Tool | Purpose |
 | --- | --- |
-| `install-mysql.ps1` | Installs MySQL Server per-user, without administrator rights |
-| `install-mysql.ps1` also creates | Desktop and Start Menu shortcuts for the server |
-| `find-mysql.ps1` | Locates the MySQL installation and its `my.ini` |
-| `load-database.ps1` | Drops and recreates `charityevents_db` from the SQL dump, then verifies it |
-| `add-mysql-to-user-path.ps1` | Puts `mysql.exe` on the user PATH |
-| `download-mysql-parallel.mjs` | Downloads the official MySQL ZIP with parallel range requests |
+| `start-all.mjs` | Checks MySQL, starts the API and the website, opens the browser |
+| `load-database.mjs` | Drops and recreates `charityevents_db` from the SQL dump, then verifies it |
 | `generate-local-data.js` | Regenerates the offline seed mirror from `02_seed.sql` |
 | `sync-theme-snippet.mjs` | Keeps the inline theme script in step with `js/theme.js` |
 | `postman-yaml-to-collection.mjs` | Re-exports the Postman collection from its YAML storage |
@@ -193,10 +197,9 @@ scripts and the checks. Each earns its place:
 | `check-no-secrets.mjs` | Refuses to publish a repository containing a real credential |
 | `check-contrast.mjs` | Measures every text element against WCAG AA in both themes |
 | `check-translations.mjs` | Fails if the four dictionaries differ or a key is missing |
-| `check-tool-scripts.mjs` | Validates the PowerShell files (syntax, reserved variables) |
-| `check-cmd-files.mjs` | Validates the batch files (quote balance, `goto` labels) |
 | `audit-references.mjs` | Fails if documentation points at a file that does not exist |
-| `find-encoding-damage.mjs` | Detects text mangled by a PowerShell encoding round trip |
+| `find-encoding-damage.mjs` | Detects text mangled by an encoding round trip |
+| `download-mysql-parallel.mjs` | Downloads the official MySQL ZIP with parallel range requests |
 
 ---
 

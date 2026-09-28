@@ -67,7 +67,8 @@ what OneDrive expects. To trim the start and end, right-click the file and choos
 ## 2. Service status before you start
 
 All three were verified running. If the machine has been restarted since, run
-`start-all.cmd` from the project folder.
+`node tools/start-all.mjs` from the project folder. Leave it running while you
+record; Ctrl+C in that terminal stops the API and the website together.
 
 | Service | Port | How to check |
 | --- | --- | --- |
@@ -233,7 +234,7 @@ a complete inventory of the site.
 | The recording shows the wrong screen | The Display Capture source points at another monitor. Select the correct display in the source's properties. |
 | The video looks soft and the code is unreadable | Output resolution below 1080p, or browser zoom too small. Set 1080p in Settings > Video, zoom the browser to 110-125%. |
 | OBS reports dropped frames | Lower FPS to 30, close other applications, plug the charger in. |
-| The event list is empty on camera | The API stopped. Open `http://localhost:3000/api/health`; if it is down, run `start-all.cmd`. |
+| The event list is empty on camera | The API stopped. Open `http://localhost:3000/api/health`; if it is down, run `node tools/start-all.mjs`. |
 | Workbench will not connect | The MySQL service stopped. In an administrator command prompt run `net start MySQL84`. |
 | Postman returns 404 for every request | The `baseUrl` variable is wrong. It should read `http://localhost:3000/api` in the collection variables. |
 | A notification appears mid-take | Stop, re-record that section, cut it in the editor. Do not restart the whole video. |
