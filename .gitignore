@@ -3,8 +3,13 @@ mysql/
 .mysql-install/
 start-mysql.cmd
 stop-mysql.cmd
-# NOTE: start-all.cmd is intentionally NOT ignored. It is the one-click entry
-# point documented in the README, so the marker needs it in the repository.
+
+# Local one-click launcher. It is a convenience for this machine only: the
+# documented entry point is `node tools/start-all.mjs`, which the README
+# describes and which needs no batch file. Keeping it untracked also keeps
+# Batchfile out of the GitHub language bar, which otherwise reports it as a
+# language used in the project.
+start.cmd
 
 # Dependencies
 node_modules/
